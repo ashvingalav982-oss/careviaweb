@@ -1,0 +1,82 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and authentication data",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique Firebase Auth ID" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["customer", "provider", "admin"] },
+        "walletBalance": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "role"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Service booking records",
+      "type": "object",
+      "properties": {
+        "customerId": { "type": "string", "description": "User ID of the customer" },
+        "providerId": { "type": "string", "description": "User ID of the provider" },
+        "serviceType": { "type": "string" },
+        "category": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "completed", "cancelled"] },
+        "amount": { "type": "number" },
+        "bookingDate": { "type": "string", "format": "date-time" },
+        "details": { "type": "string" },
+        "location": { "type": "string" },
+        "otp": { "type": "string", "description": "Service verification OTP" }
+      },
+      "required": ["customerId", "serviceType", "status"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial transaction logs for wallet/payments",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["credit", "debit"] },
+        "status": { "type": "string", "enum": ["pending", "completed", "failed"] },
+        "method": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Query": {
+      "title": "Support Query",
+      "description": "Customer support or AI service queries",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "message": { "type": "string" },
+        "response": { "type": "string" },
+        "category": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Service bookings"
+    },
+    "/transactions/{txnId}": {
+      "schema": "Transaction",
+      "description": "Financial logs"
+    },
+    "/queries/{queryId}": {
+      "schema": "Query",
+      "description": "Customer queries"
+    }
+  }
+}

@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-surface: #061111; /* Deep Emerald Black */
+  --color-card: #0A1A1A; /* Dark Emerald Card */
+  --color-primary: #14B8A6; /* Vibrant Teal/Emerald */
+  --color-primary-container: #0D2D2D;
+  --color-secondary: #D4AF37; /* Metallic Gold */
+  --color-muted: #94A3B8; /* Slate Blue Muted */
+  --color-glass: rgba(10, 26, 26, 0.7);
+  --color-border-glass: rgba(20, 184, 166, 0.2);
+  --color-border-secondary: #1E293B;
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-white font-sans antialiased selection:bg-primary selection:text-surface;
+    background-image: 
+      radial-gradient(circle at 0% 0%, rgba(20, 184, 166, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 100% 100%, rgba(212, 175, 55, 0.05) 0%, transparent 50%);
+    min-height: 100vh;
+  }
+  
+  h1, h2, h3, h4 {
+    @apply font-bold tracking-tight text-white;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-card/80 backdrop-blur-[12px] border border-border-glass;
+  }
+  
+  .glass-card {
+    @apply bg-card/60 backdrop-blur-[12px] border border-border-glass p-6 transition-all duration-300 rounded-3xl;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-surface px-6 py-3 rounded-full font-bold transition-all hover:brightness-110 active:scale-95 text-xs uppercase tracking-widest;
+  }
+
+  .btn-outline {
+    @apply border border-border-secondary text-muted px-6 py-3 rounded-full font-semibold transition-all hover:bg-white/5;
+  }
+
+  .btn-gold {
+    @apply bg-primary text-surface px-6 py-3 rounded-full font-bold transition-all hover:brightness-110 active:scale-95;
+  }
+
+  .label-bold {
+    @apply text-[10px] uppercase tracking-[0.2em] font-bold text-muted;
+  }
+  
+  .sos-button {
+    @apply w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(220,38,38,0.5)] animate-pulse hover:scale-110 transition-transform cursor-pointer z-[100];
+  }
+
+  .monolith-grid {
+    background-image: 
+    linear-gradient(rgba(197, 160, 89, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(197, 160, 89, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+}

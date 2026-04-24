@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 0.1 Context-Aware Helpers
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { 
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      ); 
+    }
+    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function isVerifiedUser() { return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'phone'); }
+
+    // 1. User Validation
+    function isValidUser(data) {
+      return data.uid is string && data.uid == request.auth.uid
+        && data.role in ['customer', 'provider', 'admin']
+        && (data.walletBalance == null || data.walletBalance is number)
+        && data.keys().hasAll(['uid', 'role']);
+    }
+
+    match /users/{uid} {
+      allow get: if isOwner(uid) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(uid) && isValidUser(incoming());
+      allow update: if isOwner(uid) && isValidUser(incoming())
+        && (isAdmin() || incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'walletBalance', 'updatedAt', 'lastLogin']));
+    }
+
+    // 2. Booking Validation
+    function isValidBooking(data) {
+      return data.customerId is string
+        && data.serviceType is string && data.serviceType.size() <= 100
+        && data.status in ['PENDING', 'ACCEPTED_BY_SP', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']
+        && data.keys().hasAll(['customerId', 'serviceType', 'status']);
+    }
+
+    match /bookings/{bookingId} {
+      allow get: if isSignedIn() && (existing().customerId == request.auth.uid || existing().providerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (
+        isAdmin() ||
+        (request.query.limit <= 100 && (resource.data.customerId == request.auth.uid || resource.data.providerId == request.auth.uid))
+      );
+      allow create: if isSignedIn() && isValidBooking(incoming()) && incoming().customerId == request.auth.uid;
+      allow update: if isSignedIn() && (
+          (existing().customerId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'details', 'bookingDate', 'otp']))
+          || (existing().providerId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'otp', 'providerName']))
+          || isAdmin()
+        );
+    }
+
+    // 3. Transactions
+    match /transactions/{txnId} {
+      allow get: if isSignedIn() && (isOwner(existing().userId) || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isOwner(incoming().userId);
+      allow update, delete: if false; // Transactions are immutable logs
+    }
+
+    // 4. Queries
+    match /queries/{queryId} {
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (
+        isAdmin() ||
+        (request.query.limit <= 100 && resource.data.userId == request.auth.uid)
+      );
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // Admins Root
+    match /admins/{uid} {
+      allow read, write: if false; // Controlled via Cloud Console
+    }
+  }
+}
