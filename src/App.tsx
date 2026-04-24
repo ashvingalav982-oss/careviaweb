@@ -71,7 +71,8 @@ import {
   GoogleAuthProvider, 
   signOut,
   RecaptchaVerifier,
-  signInWithPhoneNumber
+  signInWithPhoneNumber,
+  sendEmailVerification
 } from 'firebase/auth';
 import { 
   doc, 
@@ -204,73 +205,7 @@ const LOCATIONS = [
   "Vellore", "Warangal"
 ];
 
-const MOCK_PROVIDERS = [
-  { 
-    id: 1, 
-    name: 'Aarav Sharma', 
-    location: 'Mumbai', 
-    category: 'elderly', 
-    rating: 4.8, 
-    experience: '5 years', 
-    education: 'General Nursing',
-    bio: 'Dedicated nursing professional with a specialization in geriatric care and physical rehabilitation.',
-    specialties: ['Wound Care', 'Rehab', 'Vital Monitoring'],
-    languages: ['Hindi', 'English', 'Marathi'],
-    avatar: 'https://i.pravatar.cc/150?u=aarav'
-  },
-  { 
-    id: 2, 
-    name: 'Priya Patel', 
-    location: 'Mumbai', 
-    category: 'child', 
-    rating: 4.9, 
-    experience: '8 years', 
-    education: 'Child Psychology',
-    bio: 'Expert in early childhood development with a background in pediatric behavioral therapy.',
-    specialties: ['Behavioral Therapy', 'Montessori', 'Creative Arts'],
-    languages: ['Gujarati', 'Hindi', 'English'],
-    avatar: 'https://i.pravatar.cc/150?u=priya'
-  },
-  { 
-    id: 3, 
-    name: 'Vikram Singh', 
-    location: 'Delhi', 
-    category: 'helpers', 
-    rating: 4.5, 
-    experience: '10 years', 
-    education: 'Hospitality Management',
-    bio: 'Seasoned hospitality expert focused on managing home environments and domestic staff efficiency.',
-    specialties: ['Culinary Arts', 'Home Security', 'Management'],
-    languages: ['Hindi', 'Punjabi', 'English'],
-    avatar: 'https://i.pravatar.cc/150?u=vikram'
-  },
-  { 
-    id: 4, 
-    name: 'Ananya Iyer', 
-    location: 'Bengaluru', 
-    category: 'pet', 
-    rating: 4.7, 
-    experience: '3 years', 
-    education: 'Veterinary Assistant',
-    bio: 'Passionate animal lover and trained veterinary assistant providing expert care for domestic pets.',
-    specialties: ['Emergency Pet Aid', 'Grooming', 'Training'],
-    languages: ['Kannada', 'Tamil', 'English'],
-    avatar: 'https://i.pravatar.cc/150?u=ananya'
-  },
-  { 
-    id: 5, 
-    name: 'Rohan Gupta', 
-    location: 'Delhi', 
-    category: 'elderly', 
-    rating: 4.6, 
-    experience: '4 years', 
-    education: 'Physiotherapy',
-    bio: 'Certified physiotherapist focused on senior mobility and post-operative recovery exercises.',
-    specialties: ['Joint Mobility', 'Pain Mgmt', 'Posture Correction'],
-    languages: ['Hindi', 'English'],
-    avatar: 'https://i.pravatar.cc/150?u=rohan'
-  },
-];
+const MOCK_PROVIDERS: any[] = [];
 
 const NAV_LINKS = [
   { name: 'Home', href: '#' },
@@ -602,6 +537,23 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
+  
+  const saveToExcel = async (userData: any) => {
+    try {
+      const formData = new URLSearchParams();
+      formData.append('form-name', 'registrations');
+      Object.keys(userData).forEach(key => formData.append(key, userData[key]));
+      
+      await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData.toString()
+      });
+    } catch (err) {
+      console.error('Failed to save to Excel/Form', err);
+    }
+  };
+
   const setupRecaptcha = () => {
     if ((window as any).recaptchaVerifier) {
       return (window as any).recaptchaVerifier;
@@ -639,6 +591,7 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
             updatedAt: serverTimestamp(),
             lastLogin: serverTimestamp()
           }, { merge: true });
+          await saveToExcel({ uid: user.uid, role: role, phone: user.phoneNumber || '', email: user.email || '' });
 
           if (role === 'admin') onOpenAdmin();
           else if (role === 'provider') onProviderLogin();
@@ -657,7 +610,7 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
         const provider = new GoogleAuthProvider();
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
-        
+        if (!user.emailVerified) { try { await sendEmailVerification(user); alert('Verification email sent! Please check your inbox.'); } catch(e){} }
         await setDoc(doc(db, 'users', user.uid), {
           uid: user.uid,
           email: user.email,
@@ -667,6 +620,7 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
           updatedAt: serverTimestamp(),
           lastLogin: serverTimestamp()
         }, { merge: true });
+          await saveToExcel({ uid: user.uid, role: role, phone: user.phoneNumber || '', email: user.email || '' });
 
         onLogin();
         onClose();
@@ -1785,6 +1739,7 @@ const AdminDashboard = ({
   onLogout
 }: any) => {
   const [isLocked, setIsLocked] = useState(true);
+  const [secretCode, setSecretCode] = useState('');
   const [step, setStep] = useState(1); // 1: Credentials, 2: OTP
   const [adminNumber, setAdminNumber] = useState('');
   const [pass, setPass] = useState('');
@@ -1839,12 +1794,11 @@ const AdminDashboard = ({
       return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
     });
 
-  const handleVerify = () => {
-    // Specific credentials for the admin console
-    if (step === 1 && adminNumber === '6377446920' && pass === 'CAREVIA_ADMIN_99') {
-       setStep(2);
-    } else if (step === 2 && otp === '1234') {
+    const handleVerify = () => {
+    if (secretCode === 'CAREVIA_SECRET_MASTER') {
        setIsLocked(false);
+    } else {
+       alert("Invalid Secret Code");
     }
   };
 
@@ -1890,48 +1844,20 @@ const AdminDashboard = ({
            <p className="text-xs text-white/40 uppercase tracking-[0.2em] mb-8 font-bold">Protocol: Secure 2-Step Gate</p>
            
            <div className="space-y-6">
-              {step === 1 ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="label-bold mb-2 block text-left">Admin Mobile</label>
-                    <input 
-                      type="tel" 
-                      value={adminNumber}
-                      onChange={(e) => setAdminNumber(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-xl text-sm outline-none focus:border-primary" 
-                      placeholder="+91 0000000000" 
-                    />
-                  </div>
-                  <div>
-                    <label className="label-bold mb-2 block text-left">Internal Password</label>
-                    <input 
-                      type="password" 
-                      value={pass}
-                      onChange={(e) => setPass(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-xl text-sm outline-none focus:border-primary" 
-                      placeholder="••••••••••••" 
-                    />
-                  </div>
-                  <p className="text-[10px] text-white/20 mt-2 italic">Hint: 6377446920 / CAREVIA_ADMIN_99</p>
-                </div>
-              ) : (
-                <div>
-                  <label className="label-bold mb-2 block">Secure verification code</label>
-                  <input 
-                    type="text" 
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-xl text-center text-sm outline-none focus:border-primary tracking-[1em] font-mono" 
-                    placeholder="XXXX" 
-                  />
-                  <p className="text-[10px] text-white/20 mt-2 italic text-left">Sent to secure admin hardware device (Hint: 1234)</p>
-                </div>
-              )}
-              
+              <div>
+                <label className="label-bold mb-2 block text-left text-primary">Master Secret Code</label>
+                <input 
+                  type="password" 
+                  value={secretCode || ''}
+                  onChange={(e) => setSecretCode(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-xl text-center text-sm outline-none focus:border-primary tracking-[0.5em] font-mono" 
+                  placeholder="••••••••••••" 
+                />
+              </div>
               <div className="flex gap-4">
                 <Button variant="outline" className="flex-1 py-4 text-[10px]" onClick={onClose}>Cancel</Button>
-                <Button variant="primary" className="flex-y-4 text-[10px]" onClick={handleVerify}>
-                  {step === 1 ? 'Verify Credentials' : 'Authorize Session'}
+                <Button variant="primary" className="flex-1 py-4 text-[10px]" onClick={handleVerify}>
+                  Access Secure Hub
                 </Button>
               </div>
            </div>
@@ -2056,15 +1982,15 @@ const AdminDashboard = ({
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-12">
                    <div className="glass-card p-6 border-white/10 text-center">
                       <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">Total Users</p>
-                      <p className="text-3xl font-bold">1,280</p>
+                      <p className="text-3xl font-bold">0</p>
                    </div>
                    <div className="glass-card p-6 border-white/10 text-center">
                       <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">Active Care</p>
-                      <p className="text-3xl font-bold">54</p>
+                      <p className="text-3xl font-bold">0</p>
                    </div>
                    <div className="glass-card p-6 border-white/10 text-center">
                       <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2 text-primary">Revenue</p>
-                      <p className="text-3xl font-bold">₹2.4M</p>
+                      <p className="text-3xl font-bold">₹0</p>
                    </div>
                    <div className="glass-card p-6 border-red-500/20 text-center bg-red-500/5">
                       <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest mb-2">SOS Alerts</p>
@@ -3155,11 +3081,7 @@ const LiveAlarm = ({ bookings, financialAlerts = [], isAdmin, isSP, onAcknowledg
 // --- Main App ---
 
 const ReviewsSection = () => {
-  const reviews = [
-    { name: "Rahul S.", role: "Customer", rating: 5, text: "The elderly care for my father has been exceptional. The caregivers are professional and compassionate.", date: "2 days ago" },
-    { name: "Sunita M.", role: "Service Provider", rating: 5, text: "CAREVIA provides a great platform for professionals like me to connect with families who truly need our help.", date: "1 week ago" },
-    { name: "Amit K.", role: "Customer", rating: 4, text: "Excellent housekeeping services. The background check and verification really give me peace of mind.", date: "3 days ago" }
-  ];
+  const reviews: any[] = [];
 
   return (
     <section className="py-24 max-w-7xl mx-auto px-6 font-sans">
@@ -3750,6 +3672,33 @@ export default function App() {
 
   const [notificationSound] = useState(new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'));
 
+  
+  const [providerSound] = useState(new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'));
+  const [customerSound] = useState(new Audio('https://assets.mixkit.co/active_storage/sfx/2870/2870-preview.mp3'));
+  const [premiumSound] = useState(new Audio('https://assets.mixkit.co/active_storage/sfx/2871/2871-preview.mp3'));
+
+  useEffect(() => {
+    if (!profile || profile.role !== 'admin') return;
+    
+    // Listen for new users
+    const unsubUsers = onSnapshot(query(collection(db, 'users'), orderBy('updatedAt', 'desc'), limit(5)), (snap) => {
+      snap.docChanges().forEach(change => {
+        if (change.type === 'added') {
+           const data = change.doc.data();
+           // Only play if it's very recent (last 2 mins)
+           if (data.updatedAt && (Date.now() - data.updatedAt.toMillis() < 120000)) {
+               if (data.role === 'provider') providerSound.play().catch(()=>console.log('Audio error'));
+               else customerSound.play().catch(()=>console.log('Audio error'));
+           }
+        }
+      });
+    });
+
+    return () => {
+      unsubUsers();
+    };
+  }, [profile]);
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -3770,23 +3719,7 @@ export default function App() {
     notificationSound.play().catch(e => console.log("Sound blocked by browser:", e));
   };
 
-  // Simulate incoming booking for testing
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const newBooking = { 
-        id: `BK-${Math.floor(Math.random() * 900) + 100}`, 
-        customer: 'New Client', 
-        service: 'Emergency Respite', 
-        date: '2026-04-24', 
-        location: 'Colaba, Mumbai', 
-        status: 'PENDING', 
-        price: '3,000' 
-      };
-      //setActiveBookings(prev => [newBooking, ...prev]);
-      //playNotification();
-    }, 15000);
-    return () => clearTimeout(timer);
-  }, []);
+  
 
   const handleSPAccept = (bookingId: string) => {
     setActiveBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'ACCEPTED_BY_SP' } : b));
@@ -3843,12 +3776,7 @@ export default function App() {
     branch: 'MUMBAI MAIN'
   });
 
-  const [logs, setLogs] = useState<any[]>([
-    { id: 1, action: "User Verification", admin: "Ashvin", time: "2026-04-21 15:30", type: 'admin' },
-    { id: 2, action: "New Provider Vetted", admin: "Sarah", time: "2026-04-21 14:15", type: 'admin' },
-    { id: 3, action: "Subscription Updated", admin: "Ashvin", time: "2026-04-21 10:05", type: 'admin' },
-    { id: 4, action: "Data Access Protocol Changed", admin: "Head_Admin", time: "2026-04-21 09:45", type: 'system' },
-  ]);
+  const [logs, setLogs] = useState<any[]>([]);
 
   const addLog = (log: any) => {
     setLogs(prev => [{ ...log, id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}` }, ...prev]);
