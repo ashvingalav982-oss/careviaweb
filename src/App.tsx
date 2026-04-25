@@ -72,7 +72,9 @@ import {
   signOut,
   RecaptchaVerifier,
   signInWithPhoneNumber,
-  sendEmailVerification
+  sendEmailVerification,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
 } from 'firebase/auth';
 import { 
   doc, 
@@ -83,6 +85,7 @@ import {
   query, 
   where, 
   orderBy,
+  limit,
   addDoc,
   serverTimestamp
 } from 'firebase/firestore';
@@ -525,6 +528,7 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
   const [error, setError] = useState('');
   const [isResending, setIsResending] = useState(false);
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
 
   useEffect(() => {
     setOtpSent(false);
@@ -532,6 +536,7 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
     setError('');
     setOtp('');
     setPhone('');
+    setEmail('');
   }, [mode, method, isOpen]);
 
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
@@ -606,24 +611,69 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
           setOtpSent(true);
         }
       } else {
-        // For prototype, we'll use Google login for the email path
-        const provider = new GoogleAuthProvider();
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        if (!user.emailVerified) { try { await sendEmailVerification(user); alert('Verification email sent! Please check your inbox.'); } catch(e){} }
-        await setDoc(doc(db, 'users', user.uid), {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL,
-          role: 'customer',
-          updatedAt: serverTimestamp(),
-          lastLogin: serverTimestamp()
-        }, { merge: true });
-          await saveToExcel({ uid: user.uid, role: role, phone: user.phoneNumber || '', email: user.email || '' });
+        if (!otpSent) {
+          if (!email) throw new Error('Please enter your email');
+          const res = await fetch('/.netlify/functions/send-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Failed to send OTP');
+          setOtpSent(true);
+        } else {
+          if (!otp) throw new Error('Please enter the OTP sent to your email');
+          const res = await fetch('/.netlify/functions/verify-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, otp })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Invalid OTP');
+          
+          let user;
+          try {
+            const cred = await signInWithEmailAndPassword(auth, email, email + 'CareviaOTP!123');
+            user = cred.user;
+          } catch(err: any) {
+            try {
+              const cred = await createUserWithEmailAndPassword(auth, email, email + 'CareviaOTP!123');
+              user = cred.user;
+            } catch(e2: any) {
+              if (e2.code === 'auth/email-already-in-use') {
+                 const cred = await signInWithEmailAndPassword(auth, email, email + 'CareviaOTP!123');
+                 user = cred.user;
+              } else {
+                 throw e2;
+              }
+            }
+          }
+          
+          await setDoc(doc(db, 'users', user.uid), {
+            uid: user.uid,
+            email: user.email,
+            role: 'customer',
+            updatedAt: serverTimestamp(),
+            lastLogin: serverTimestamp()
+          }, { merge: true });
+          
+          try {
+             await saveToExcel({ uid: user.uid, role: 'customer', phone: '', email: user.email || '' });
+          } catch(e) {}
+          
+          // AI Welcome Message
+          try {
+            const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+            const aiResp = await ai.models.generateContent({
+              model: "gemini-2.5-flash",
+              contents: [{ role: 'user', parts: [{ text: "Generate a short 1-sentence warm welcome message for a user named " + email.split('@')[0] + " who just logged into CAREVIA, a premium healthcare platform." }] }]
+            });
+            setTimeout(() => alert("CAREVIA AI: " + aiResp.text), 500);
+          } catch(e) { console.error('AI error', e); }
 
-        onLogin();
-        onClose();
+          onLogin();
+          onClose();
+        }
       }
     } catch (err: any) {
       console.error(err);
@@ -765,20 +815,61 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
             </div>
           ) : (
             <div className="space-y-4">
-               <div className="relative">
-                  <div className="p-8 border-2 border-dashed border-white/5 rounded-3xl text-center space-y-4 group hover:border-primary/20 transition-all">
-                     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-primary group-hover:scale-110 transition-transform">
-                        <LogIn className="w-8 h-8" />
-                     </div>
-                     <div>
-                        <h4 className="text-sm font-black uppercase tracking-widest mb-1">Instant Google Access</h4>
-                        <p className="text-[10px] text-white/40 uppercase tracking-widest leading-relaxed">Securely access your records with secondary verification enabled.</p>
-                     </div>
-                     <Button variant="primary" className="w-full flex items-center gap-3" onClick={handleAction} disabled={loading}>
-                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Smartphone className="w-4 h-4" /> Continue with Google</>}
-                     </Button>
-                  </div>
+               {mode === 'signup' && (
+                 <div>
+                   <label className="label-bold mb-2 block">Full Name</label>
+                   <input type="text" className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors" placeholder="Enter your full name" />
+                 </div>
+               )}
+               <div>
+                 <label className="label-bold mb-2 block">Email Address</label>
+                 <div className="flex gap-2">
+                   <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/50"><Mail className="w-4 h-4"/></div>
+                   <input 
+                     type="email" 
+                     value={email}
+                     onChange={(e) => setEmail(e.target.value)}
+                     className="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors" 
+                     placeholder="Enter your email" 
+                   />
+                 </div>
                </div>
+               {otpSent && (
+                 <motion.div 
+                   initial={{ opacity: 0, height: 0 }}
+                   animate={{ opacity: 1, height: 'auto' }}
+                   className="space-y-4"
+                 >
+                   <div>
+                     <div className="flex justify-between items-center mb-2">
+                       <label className="label-bold block">Email OTP</label>
+                     </div>
+                     <input 
+                       type="text" 
+                       value={otp}
+                       onChange={(e) => {
+                         setOtp(e.target.value);
+                         if (error) setError('');
+                       }}
+                       className={`w-full bg-white/5 border px-4 py-3 rounded-xl text-sm outline-none transition-all tracking-[0.5em] font-mono text-center ${error ? 'border-red-500/50 bg-red-500/5' : 'border-white/10 focus:border-primary'}`} 
+                       placeholder="XXXXXX" 
+                     />
+                     {error && (
+                       <motion.p 
+                         initial={{ opacity: 0, scale: 0.9 }}
+                         animate={{ opacity: 1, scale: 1 }}
+                         className="text-[10px] font-bold text-red-500 uppercase tracking-widest mt-2 flex items-center gap-2"
+                       >
+                         <AlertTriangle className="w-3 h-3" /> {error}
+                       </motion.p>
+                     )}
+                     <p className="text-[9px] text-white/20 mt-2 uppercase font-bold italic tracking-wider">Verification sent to your email.</p>
+                   </div>
+                 </motion.div>
+               )}
+               <Button variant="primary" className="w-full" onClick={handleAction} disabled={loading}>
+                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (otpSent ? (mode === 'login' ? 'Verify & Sign In' : 'Verify & Register') : 'Get Verification OTP')}
+               </Button>
             </div>
           )}
         </div>
