@@ -612,6 +612,16 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
         await saveToExcel({ uid: user.uid, role: 'customer', phone: '', email: user.email || '' });
       } catch(e) {}
       
+      try {
+        if (user.email) {
+          await fetch('/.netlify/functions/send-welcome', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: user.email })
+          });
+        }
+      } catch(e) { console.error('Error sending welcome email:', e); }
+      
       onLogin();
       onClose();
     } catch(err: any) {
@@ -713,6 +723,16 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
           try {
              await saveToExcel({ uid: user.uid, role: 'customer', phone: '', email: user.email || '' });
           } catch(e) {}
+          
+          try {
+            if (user.email) {
+              await fetch('/.netlify/functions/send-welcome', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: user.email })
+              });
+            }
+          } catch(e) { console.error('Error sending welcome email:', e); }
           
           // AI Welcome Message
           try {
@@ -4618,16 +4638,17 @@ const Navbar = ({ onAuthClick, onBotClick, isPremium, isLoggedIn, onProfileClick
             className="btn-outline p-3 xs:px-5 xs:py-2.5 text-[9px] uppercase tracking-widest flex items-center gap-2 bg-primary text-surface font-black border-transparent hover:opacity-90 transition-all shadow-[0_0_20px_rgba(45,212,191,0.2)]"
           >
             <User className="w-3.5 h-3.5" /> 
-            <span className="hidden xs:block">{isLoggedIn ? 'My Profile' : 'Login'}</span>
+            <span className="hidden xs:block">{isLoggedIn ? 'Logged In' : 'Login'}</span>
           </button>
 
           {isLoggedIn && (
             <button 
               onClick={onLogout}
-              className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"
+              className="p-3 xs:px-5 xs:py-2.5 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all flex items-center gap-2"
               title="Logout"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden xs:block text-[9px] uppercase tracking-widest font-black">Log Out</span>
             </button>
           )}
           
@@ -4673,7 +4694,7 @@ const Navbar = ({ onAuthClick, onBotClick, isPremium, isLoggedIn, onProfileClick
                   onClick={() => { isLoggedIn ? onProfileClick() : onAuthClick(); setIsMobileMenuOpen(false); }}
                   className="w-full py-5 bg-primary text-surface rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3"
                 >
-                  <User className="w-4 h-4" /> {isLoggedIn ? 'My Profile' : 'Login'}
+                  <User className="w-4 h-4" /> {isLoggedIn ? 'Logged In' : 'Login'}
                 </button>
                 {isLoggedIn && (
                   <button 
