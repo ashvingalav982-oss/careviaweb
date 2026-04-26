@@ -6,14 +6,15 @@ export default async (req: Request) => {
   }
 
   try {
-    const { email, otp } = await req.json();
+    const { email, phone, otp } = await req.json();
+    const identifier = email || phone;
 
-    if (!email || !otp) {
-      return new Response(JSON.stringify({ error: 'Email and OTP are required' }), { status: 400 });
+    if (!identifier || !otp) {
+      return new Response(JSON.stringify({ error: 'Email or phone and OTP are required' }), { status: 400 });
     }
 
     const store = getStore('otps');
-    const storedData = await store.get(email, { type: 'json' });
+    const storedData = await store.get(identifier, { type: 'json' });
 
     if (!storedData) {
       return new Response(JSON.stringify({ error: 'OTP expired or invalid' }), { status: 400 });
@@ -22,7 +23,7 @@ export default async (req: Request) => {
     const { otp: storedOtp, expiresAt } = storedData as { otp: string, expiresAt: number };
 
     if (Date.now() > expiresAt) {
-      await store.delete(email);
+      await store.delete(identifier);
       return new Response(JSON.stringify({ error: 'OTP expired' }), { status: 400 });
     }
 
@@ -31,7 +32,7 @@ export default async (req: Request) => {
     }
 
     // Success! Delete the OTP
-    await store.delete(email);
+    await store.delete(identifier);
 
     return new Response(JSON.stringify({ 
       success: true, 
