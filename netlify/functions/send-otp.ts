@@ -92,7 +92,8 @@ export default async (req: Request) => {
     return new Response(JSON.stringify({ 
       success: true, 
       message: 'OTP sent successfully',
-      previewUrl // Return preview URL or simulated OTP so frontend can log/display it if needed for testing
+      previewUrl, // Return preview URL or simulated OTP so frontend can log/display it if needed for testing
+      mockOtp: previewUrl ? otp : undefined // Explicitly return the OTP if we are in mock mode
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }

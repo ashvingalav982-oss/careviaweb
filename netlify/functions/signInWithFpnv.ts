@@ -3,7 +3,7 @@ import { getApps, initializeApp, cert } from "firebase-admin/app";
 import { getAuth, UserRecord } from "firebase-admin/auth";
 
 // Find your Firebase project number in the Firebase console.
-const FIREBASE_PROJECT_NUMBER = process.env.FIREBASE_PROJECT_NUMBER || "123456789";
+const FIREBASE_PROJECT_NUMBER = "948313425033";
 
 // The issuer and audience claims of the FPNV token are specific to your project.
 const issuer = `https://fpnv.googleapis.com/projects/${FIREBASE_PROJECT_NUMBER}`;
