@@ -671,6 +671,8 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || 'Failed to send OTP');
+          if (data.mockOtp) alert('TEST MODE OTP: ' + data.mockOtp);
+          else if (data.previewUrl) alert('TEST MODE LINK: ' + data.previewUrl);
           setOtpSent(true);
         } else {
           if (!otp) throw new Error('Please enter the OTP sent to your email');
@@ -759,7 +761,8 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to send OTP');
-        if (data.previewUrl) console.log('OTP Preview:', data.previewUrl);
+        if (data.mockOtp) alert('TEST MODE OTP: ' + data.mockOtp);
+        else if (data.previewUrl) alert('TEST MODE LINK: ' + data.previewUrl);
       }
     } catch (err: any) {
       setError(err.message);
