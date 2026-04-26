@@ -558,12 +558,34 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
     if ((window as any).recaptchaVerifier) {
       return (window as any).recaptchaVerifier;
     }
+
+    // Set language as requested
+    auth.languageCode = 'it';
+    // To apply the default browser preference instead of explicitly setting it.
+    auth.useDeviceLanguage();
+
     const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      size: 'invisible',
-      callback: () => {
-        console.log('Recaptcha verified');
+      'size': 'normal',
+      'callback': (response: any) => {
+        // reCAPTCHA solved, allow signInWithPhoneNumber.
+        console.log('reCAPTCHA solved', response);
+        // If we needed to get the response explicitly as requested:
+        // const recaptchaResponse = grecaptcha.getResponse(recaptchaWidgetId);
+        if (typeof (window as any).grecaptcha !== 'undefined' && (window as any).recaptchaWidgetId !== undefined) {
+           const recaptchaResponse = (window as any).grecaptcha.getResponse((window as any).recaptchaWidgetId);
+           console.log('Recaptcha response:', recaptchaResponse);
+        }
+      },
+      'expired-callback': () => {
+        // Response expired. Ask user to solve reCAPTCHA again.
+        console.log('reCAPTCHA expired');
       }
     });
+
+    verifier.render().then((widgetId) => {
+      (window as any).recaptchaWidgetId = widgetId;
+    });
+
     (window as any).recaptchaVerifier = verifier;
     return verifier;
   };
@@ -1142,55 +1164,116 @@ const AboutSection = () => (
   </section>
 );
 
-const ContactSection = () => (
-  <section id="contact" className="py-24 max-w-7xl mx-auto px-6 font-sans scroll-mt-24">
-    <SectionHeading 
-      title="contact us"
-      centered
-    />
-    <div className="grid lg:grid-cols-3 gap-8">
-      <div className="lg:col-span-1 space-y-4">
-          <div className="glass-card p-8 border-white/5">
-             <Mail className="text-primary mb-4" />
-             <h4 className="text-xs font-bold uppercase tracking-widest mb-2">Email Us</h4>
-             <p className="text-lg font-bold">care@carevia.app</p>
-          </div>
-          <div className="glass-card p-8 border-white/5">
-             <Phone className="text-primary mb-4" />
-             <h4 className="text-xs font-bold uppercase tracking-widest mb-2">Helpline Number</h4>
-             <p className="text-lg font-bold">+91 6377446920</p>
-          </div>
-       </div>
+const ContactSection = () => {
+  const [formData, setFormData] = useState({ name: '', phone: '', query: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [aiResponse, setAiResponse] = useState('');
 
-       <div className="lg:col-span-2 glass-card p-12 bg-primary/5 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-[60px]" />
-          <h4 className="text-xl font-bold mb-8 uppercase tracking-widest text-primary flex items-center gap-3">
-            <MessageSquare className="w-5 h-5" /> Inquiry Chat Box
-          </h4>
-          <div className="space-y-6">
-             <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                   <label className="label-bold mb-2 block">Full Name</label>
-                   <input className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-2xl text-sm outline-none focus:border-primary transition-colors" placeholder="Your Name" />
-                </div>
-                <div>
-                   <label className="label-bold mb-2 block">Mobile No</label>
-                   <input className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-2xl text-sm outline-none focus:border-primary transition-colors" placeholder="+91 XXXX..." />
-                </div>
-             </div>
-             <div>
-                <label className="label-bold mb-2 block">Describe your problem/request</label>
-                <textarea rows={4} className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-2xl text-sm outline-none focus:border-primary transition-colors resize-none" placeholder="How can we help you today?" />
-             </div>
-             <Button variant="primary" className="w-full uppercase tracking-[0.2em] text-xs py-5">
-                Send Inquiry to Coordinator
-             </Button>
-          </div>
-       </div>
-    </div>
-  </section>
-);
+  const handleSubmit = async () => {
+    if (!formData.query) return;
+    setIsSubmitting(true);
+    setAiResponse('');
+    try {
+      const res = await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          phone: formData.phone,
+          query: formData.query,
+          category: 'General Inquiry'
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAiResponse(data.inquiry.aiResponse);
+        setFormData({ name: '', phone: '', query: '' });
+      } else {
+        setAiResponse("Failed to send inquiry. Please try again.");
+      }
+    } catch (error) {
+      setAiResponse("An error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
+  return (
+    <section id="contact" className="py-24 max-w-7xl mx-auto px-6 font-sans scroll-mt-24">
+      <SectionHeading
+        title="contact us"
+        centered
+      />
+      <div className="grid lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-1 space-y-4">
+            <div className="glass-card p-8 border-white/5">
+               <Mail className="text-primary mb-4" />
+               <h4 className="text-xs font-bold uppercase tracking-widest mb-2">Email Us</h4>
+               <p className="text-lg font-bold">care@carevia.app</p>
+            </div>
+            <div className="glass-card p-8 border-white/5">
+               <Phone className="text-primary mb-4" />
+               <h4 className="text-xs font-bold uppercase tracking-widest mb-2">Helpline Number</h4>
+               <p className="text-lg font-bold">+91 6377446920</p>
+            </div>
+         </div>
+
+         <div className="lg:col-span-2 glass-card p-12 bg-primary/5 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-[60px]" />
+            <h4 className="text-xl font-bold mb-8 uppercase tracking-widest text-primary flex items-center gap-3">
+              <MessageSquare className="w-5 h-5" /> Inquiry Chat Box
+            </h4>
+            <div className="space-y-6">
+               <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                     <label className="label-bold mb-2 block">Full Name</label>
+                     <input 
+                       value={formData.name}
+                       onChange={e => setFormData({ ...formData, name: e.target.value })}
+                       className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-2xl text-sm outline-none focus:border-primary transition-colors" 
+                       placeholder="Your Name" 
+                     />
+                  </div>
+                  <div>
+                     <label className="label-bold mb-2 block">Mobile No</label>
+                     <input 
+                       value={formData.phone}
+                       onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                       className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-2xl text-sm outline-none focus:border-primary transition-colors" 
+                       placeholder="+91 XXXX..." 
+                     />
+                  </div>
+               </div>
+               <div>
+                  <label className="label-bold mb-2 block">Describe your problem/request</label>
+                  <textarea 
+                    rows={4} 
+                    value={formData.query}
+                    onChange={e => setFormData({ ...formData, query: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-2xl text-sm outline-none focus:border-primary transition-colors resize-none" 
+                    placeholder="How can we help you today?" 
+                  />
+               </div>
+               {aiResponse && (
+                 <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl text-sm text-primary-foreground">
+                   <p className="font-bold mb-1">AI Assistant Response:</p>
+                   <p>{aiResponse}</p>
+                 </div>
+               )}
+               <Button 
+                 variant="primary" 
+                 className="w-full uppercase tracking-[0.2em] text-xs py-5"
+                 onClick={handleSubmit}
+                 disabled={isSubmitting || !formData.query}
+               >
+                  {isSubmitting ? 'Processing...' : 'Send Inquiry to Coordinator'}
+               </Button>
+            </div>
+         </div>
+      </div>
+    </section>
+  );
+};
 const AIBotChat = ({ isOpen, onClose, isPremium, sessionId, onLog }: any) => {
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
@@ -1904,6 +1987,25 @@ const AdminDashboard = ({
   const [selectedBookings, setSelectedBookings] = useState<string[]>([]);
   const [detailBooking, setDetailBooking] = useState<any>(null);
 
+  const [inquiries, setInquiries] = useState<any[]>([]);
+  const [inquiriesLoading, setInquiriesLoading] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'inquiries') {
+      setInquiriesLoading(true);
+      fetch('/api/inquiries')
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) setInquiries(data);
+          setInquiriesLoading(false);
+        })
+        .catch(err => {
+          console.error("Error fetching inquiries:", err);
+          setInquiriesLoading(false);
+        });
+    }
+  }, [activeTab]);
+
   const sosAlerts = propActions.filter((a: any) => a.category === 'SOS');
   const securityAlerts = sosAlerts;
 
@@ -2058,9 +2160,14 @@ const AdminDashboard = ({
       >
         <Database className="w-4 h-4" /> Data & Export
       </button>
-      <button 
-        onClick={() => setActiveTab('financials')}
-        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'financials' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/40'}`}
+      <button
+        onClick={() => setActiveTab('inquiries')}
+        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'inquiries' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/40'}`}
+      >
+        <MessageSquare className="w-4 h-4" /> AI Inquiries
+      </button>
+      <button
+        onClick={() => setActiveTab('financials')}        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'financials' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/40'}`}
       >
         <TrendingUp className="w-4 h-4" /> Financials
       </button>
@@ -2558,6 +2665,63 @@ const AdminDashboard = ({
                 </div>
               </div>
             )}
+
+           {activeTab === 'inquiries' && (
+             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
+               <div className="flex items-center justify-between mb-8">
+                 <div>
+                   <h3 className="text-2xl font-bold uppercase tracking-tight">AI Generated Inquiries</h3>
+                   <p className="text-xs text-white/40 uppercase tracking-widest mt-1">Customer questions handled by AI Agent</p>
+                 </div>
+                 <button 
+                   onClick={() => {
+                     setInquiriesLoading(true);
+                     fetch('/api/inquiries').then(r => r.json()).then(d => { setInquiries(d); setInquiriesLoading(false); });
+                   }}
+                   className="btn-outline p-3 text-[10px] font-bold uppercase tracking-widest text-primary border-primary/20 flex items-center gap-2 hover:bg-primary/10"
+                 >
+                   {inquiriesLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Activity className="w-4 h-4" />} Refresh
+                 </button>
+               </div>
+
+               <div className="glass-card border-white/5 overflow-hidden">
+                 {inquiriesLoading && inquiries.length === 0 ? (
+                   <div className="p-12 text-center text-white/40 flex flex-col items-center gap-4">
+                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                     <p className="text-xs font-bold uppercase tracking-widest">Loading Inquiries...</p>
+                   </div>
+                 ) : inquiries.length === 0 ? (
+                   <div className="p-12 text-center text-white/40">
+                     <p className="text-xs font-bold uppercase tracking-widest">No inquiries found.</p>
+                   </div>
+                 ) : (
+                   <div className="divide-y divide-white/5">
+                     {inquiries.map((inq: any) => (
+                       <div key={inq.id} className="p-6 hover:bg-white/5 transition-colors">
+                         <div className="flex justify-between items-start mb-4">
+                           <div>
+                             <p className="text-sm font-bold">{inq.name} <span className="text-white/40 text-xs ml-2">{inq.email || inq.phone}</span></p>
+                             <p className="text-[10px] font-bold text-primary uppercase tracking-widest mt-1">{inq.category}</p>
+                           </div>
+                           <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{new Date(inq.timestamp).toLocaleString()}</span>
+                         </div>
+                         <div className="space-y-4">
+                           <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                             <p className="text-xs font-bold text-white/40 uppercase tracking-widest mb-2 flex items-center gap-2"><User className="w-3 h-3" /> Customer Query</p>
+                             <p className="text-sm text-white/80 leading-relaxed">{inq.query}</p>
+                           </div>
+                           <div className="bg-primary/5 p-4 rounded-xl border border-primary/20">
+                             <p className="text-xs font-bold text-primary uppercase tracking-widest mb-2 flex items-center gap-2"><Bot className="w-3 h-3" /> AI Agent Response</p>
+                             <p className="text-sm text-primary-foreground leading-relaxed">{inq.aiResponse}</p>
+                           </div>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 )}
+               </div>
+             </div>
+           )}
 
            {activeTab === 'financials' && (
              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
