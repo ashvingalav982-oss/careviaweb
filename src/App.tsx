@@ -61,7 +61,8 @@ import {
   Brain,
   Cloud,
   FileSpreadsheet,
-  LogIn
+  LogIn,
+  Download
 } from 'lucide-react';
 
 import { auth, db, handleFirestoreError } from './lib/firebase';
@@ -4752,6 +4753,10 @@ const Footer = ({ onLegalClick }: any) => {
            <span>Berlin // New York // Dubai</span>
         </div>
         <div className="flex gap-8 text-[10px] font-bold uppercase tracking-widest text-white/20">
+           <a href="/Website_Source_Code.pdf" download="CAREVIA_Source_Code.pdf" className="hover:text-white flex items-center gap-1">
+             <Download className="w-3 h-3" />
+             Source Code
+           </a>
            <a href="#" className="hover:text-white">Refunds</a>
            <a href="#" className="hover:text-white">SOS Feedback</a>
            <a href="#" className="hover:text-white">Investor Relations</a>
