@@ -2999,6 +2999,38 @@ const AdminDashboard = ({
                         <p className="text-[10px] text-white/40 uppercase tracking-widest mt-2 leading-relaxed">Download the encrypted project architecture and source files as PDF.</p>
                      </div>
 
+                     <div className="flex-1 glass-card p-8 border-purple-500/20 bg-purple-500/5 group hover:bg-purple-500/10 cursor-pointer transition-all" onClick={async () => {
+                        try {
+                           // 1. Sync Bookings to Google Sheets
+                           const headers = ['ID', 'Customer', 'Service', 'Status', 'Date', 'Time', 'Location', 'Amount'];
+                           const rows = bookings.map((b: any) => [b.id, b.customer, b.service, b.status, b.date, b.time, b.location, b.amount || 0]);
+                           await exportToSheets(`CareVia_Bookings_Sync_${new Date().toLocaleDateString()}`, headers, rows);
+                           
+                           // 2. Add to Google Cloud (Drive)
+                           const content = JSON.stringify(bookings, null, 2);
+                           await uploadToDrive(`CareVia_Bookings_Cloud_Sync_${Date.now()}.json`, content, 'application/json');
+                           
+                           // 3. Log to Google Cloud Firestore
+                           await addDoc(collection(db, 'adminNotifications'), {
+                              type: 'SYNC_AND_ADD',
+                              message: `Admin synced data with Google Sheets and Google Cloud.`,
+                              adminId: auth.currentUser?.uid || 'Unknown',
+                              timestamp: Date.now()
+                           });
+                           
+                           alert('Sync and Add with Google Sheets and Google Cloud successfully completed!');
+                        } catch (err: any) {
+                           alert(err.message);
+                        }
+                     }}>
+                        <div className="flex items-center justify-between mb-4">
+                           <Database className="w-8 h-8 text-purple-500 group-hover:scale-110 transition-transform" />
+                           <span className="text-[10px] font-black text-purple-500 uppercase tracking-widest bg-purple-500/10 px-3 py-1 rounded-full">Google Cloud Sync</span>
+                        </div>
+                        <h4 className="text-xl font-bold uppercase tracking-tight">Sync & Add</h4>
+                        <p className="text-[10px] text-white/40 uppercase tracking-widest mt-2 leading-relaxed">Direct integration: Syncs system bookings with Google Sheets and backs up to Google Cloud Drive.</p>
+                     </div>
+
                   </div>
 
                   <div className="glass-card p-8">
