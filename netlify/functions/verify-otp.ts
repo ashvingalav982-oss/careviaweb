@@ -1,4 +1,6 @@
 import { getStore } from '@netlify/blobs';
+import { getApps, initializeApp, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 
 export default async (req: Request) => {
   if (req.method !== 'POST') {
@@ -34,9 +36,47 @@ export default async (req: Request) => {
     // Success! Delete the OTP
     await store.delete(identifier);
 
+    // Initialize Firebase Admin
+    if (!getApps().length) {
+      try {
+        const serviceAccountStr = process.env.FIREBASE_SERVICE_ACCOUNT;
+        if (serviceAccountStr) {
+          const serviceAccount = JSON.parse(serviceAccountStr);
+          initializeApp({
+            credential: cert(serviceAccount)
+          });
+        } else {
+          initializeApp();
+        }
+      } catch (e) {
+        console.error("Failed to initialize Firebase Admin:", e);
+        if (!getApps().length) initializeApp();
+      }
+    }
+
+    const authAdmin = getAuth();
+    let user;
+    
+    if (email) {
+      try {
+        user = await authAdmin.getUserByEmail(email);
+      } catch {
+        user = await authAdmin.createUser({ email });
+      }
+    } else {
+      try {
+        user = await authAdmin.getUserByPhoneNumber(phone);
+      } catch {
+        user = await authAdmin.createUser({ phoneNumber: phone });
+      }
+    }
+
+    const authToken = await authAdmin.createCustomToken(user.uid);
+
     return new Response(JSON.stringify({ 
       success: true, 
-      message: 'OTP verified successfully'
+      message: 'OTP verified successfully',
+      authToken
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }

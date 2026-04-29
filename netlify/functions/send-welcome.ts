@@ -40,7 +40,7 @@ export default async (req: Request) => {
       subject: 'Welcome to CAREVIA!',
       text: 'Thank you for joining CAREVIA. We are glad to have you on board.',
       html: `
-        <div style="font-family: sans-serif; max-w-md; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px;">
+        <div style="font-family: sans-serif; max-width: 448px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px;">
           <h2 style="color: #2dd4bf;">Welcome to CAREVIA!</h2>
           <p>Thank you for joining CAREVIA. We are dedicated to providing elite concierge healthcare and domestic management.</p>
           <p>We're thrilled to have you with us!</p>
