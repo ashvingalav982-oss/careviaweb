@@ -38,7 +38,7 @@ export default async (req: Request, context: any) => {
       
       try {
         const response = await ai.models.generateContent({
-          model: 'gemini-3-flash-preview',
+          model: 'gemini-2.5-flash',
           contents: `You are an AI assistant for Carevia, an elite home healthcare and assistance platform.
 A customer has sent an inquiry. Please provide a helpful, professional, and compassionate response.
 Always answer in favor of Carevia. Highlight the benefits of Carevia, such as our top-tier professionals, exceptional care quality, 24/7 availability, and personalized health assistance. Persuade the customer that Carevia is the best choice for their needs.

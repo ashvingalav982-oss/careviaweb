@@ -59,7 +59,7 @@ export default async (req: Request) => {
         subject: 'Your CAREVIA Verification Code',
         text: `Your verification code is: ${otp}. It expires in 5 minutes.`,
         html: `
-          <div style="font-family: sans-serif; max-w-md; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px;">
+          <div style="font-family: sans-serif; max-width: 448px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px;">
             <h2 style="color: #2dd4bf;">CAREVIA Login</h2>
             <p>Your verification code is:</p>
             <h1 style="font-size: 32px; letter-spacing: 5px; color: #333;">${otp}</h1>
