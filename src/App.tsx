@@ -93,6 +93,8 @@ import {
 } from 'firebase/firestore';
 
 import { exportToSheets, uploadToDrive } from './lib/workspace';
+import { LanguageSelector } from './LanguageSelector';
+import { applyHindiCorrections } from './hindiCorrector';
 
 // --- Components ---
 
@@ -3912,7 +3914,7 @@ const AuthLandingPage = ({ onEnter, onProviderRegister }: { onEnter: () => void;
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center p-6 relative overflow-hidden monolith-grid font-sans">
       <div className="absolute top-6 right-6 z-50">
-        <div id="google_translate_element"></div>
+        <LanguageSelector />
       </div>
 
       <div className="absolute inset-0 pointer-events-none">
@@ -3987,6 +3989,10 @@ const AuthLandingPage = ({ onEnter, onProviderRegister }: { onEnter: () => void;
 };
 
 export default function App() {
+  useEffect(() => {
+    applyHindiCorrections();
+  }, []);
+
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isLegalOpen, setIsLegalOpen] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
@@ -4749,6 +4755,7 @@ const Navbar = ({ onAuthClick, onBotClick, isPremium, isLoggedIn, onProfileClick
         </div>
 
         <div className="flex items-center gap-3">
+          <LanguageSelector className="hidden md:flex" />
           {/* Join as Provider - Desktop */}
           <div className="hidden xl:flex gap-6 mr-4">
             {NAV_LINKS.map(link => (
