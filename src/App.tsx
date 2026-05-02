@@ -438,6 +438,10 @@ const PaymentModal = ({ isOpen, onClose, planName, onPaymentComplete }: any) => 
                 Please mention your <span className="text-primary">Registered Mobile Number</span> in the transaction remarks for instant activation.
               </p>
            </div>
+           <div className="pt-4 space-y-3">
+              <input type="text" placeholder="Referral Code (Optional)" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs outline-none focus:border-primary/50 text-white" />
+              <input type="text" placeholder="Coupon Code (Optional)" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs outline-none focus:border-primary/50 text-white" />
+           </div>
            <div className="pt-4 border-t border-white/5">
               <Button variant="primary" className="w-full py-4 uppercase tracking-widest text-xs" onClick={() => {
                 if (onPaymentComplete) {
@@ -1143,10 +1147,10 @@ const AboutSection = () => (
          <SectionHeading 
            sub="The Legacy"
            title="What is CAREVIA?"
-           desc="CAREVIA is a private concierge management platform. We are dedicated to providing premium, serene, and sophisticated care management for families who demand nothing but the absolute best."
+           desc="CAREVIA is a trusted care management service. We help families find the best caregivers for their loved ones."
          />
          <div className="space-y-6">
-            <p className="text-sm text-white/60 leading-loose">We act as the ultimate bridge between elite caregivers and households. Our philosophy is rooted in one word: <span className="text-primary font-bold">Discretion.</span> Whether it's post-surgery elderly care or specialized child development, we manage the personnel so you can manage your life.</p>
+            <p className="text-sm text-white/60 leading-loose">We act as the bridge between caregivers and families. Our focus is on privacy and quality. Whether it's elderly care or child care, we handle everything so you don't have to worry.</p>
             <div className="grid sm:grid-cols-2 gap-4">
                {[
                  { t: '10-Step Vetting', d: 'Rigorous vetting for every provider.' },
@@ -1482,15 +1486,15 @@ const ServiceCatalog = ({ activeTab, setActiveTab, onBook, userLocation, setUser
           <div className="flex items-center gap-4 bg-white/5 p-4 rounded-3xl border border-white/10 w-full md:w-auto self-start">
               <MapPin className="text-primary w-5 h-5 flex-shrink-0" />
               <div className="flex flex-col">
-                 <span className="text-[8px] font-bold text-white/30 uppercase tracking-[0.2em]">Service Region</span>
-                 <select 
+                 <span className="text-[8px] font-bold text-white/30 uppercase tracking-[0.2em]">Location</span>
+                 <select
                    value={userLocation}
                    onChange={(e) => setUserLocation(e.target.value)}
                    className="bg-transparent text-xs font-bold text-white outline-none cursor-pointer pr-4"
                  >
+                   <option value="" disabled hidden>Select your city</option>
                    {LOCATIONS.map(loc => <option key={loc} value={loc} className="bg-surface">{loc}</option>)}
-                 </select>
-              </div>
+                 </select>              </div>
           </div>
         </div>
 
@@ -1795,6 +1799,14 @@ const ProviderDashboard = ({ providerData, onUpdateProvider, onClose, bookings =
           >
             <Wallet className="w-4 h-4" /> Earnings
           </button>
+          {providerData?.isVerified && (
+            <button 
+              onClick={() => setActiveTab('bank')}
+              className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'bank' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-muted'}`}
+            >
+              <BriefcaseMedical className="w-4 h-4" /> Bank Details
+            </button>
+          )}
           
           <div className="mt-auto pt-6 border-t border-white/5">
              <button onClick={onLogout || onClose} className="flex items-center gap-3 w-full p-3 text-red-500/50 hover:text-red-500 text-xs font-bold uppercase tracking-widest">
@@ -1954,6 +1966,22 @@ const ProviderDashboard = ({ providerData, onUpdateProvider, onClose, bookings =
                         )}
                      </div>
                    ))}
+                </div>
+             </div>
+           )}
+
+           {activeTab === 'bank' && (
+             <div className="max-w-4xl space-y-12 animate-in fade-in duration-500">
+                <SectionHeading title="Financial Setup" sub="Bank Details" />
+                <div className="glass-card p-8 border-white/10 space-y-6">
+                   <p className="text-sm text-white/60 leading-relaxed mb-6">Please provide your bank account details for automated payouts. These details are securely verified by our finance team.</p>
+                   <div className="space-y-4">
+                      <input type="text" placeholder="Account Holder Name" className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-xs outline-none focus:border-primary/50 text-white" />
+                      <input type="text" placeholder="Bank Name" className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-xs outline-none focus:border-primary/50 text-white" />
+                      <input type="text" placeholder="Account Number" className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-xs outline-none focus:border-primary/50 text-white" />
+                      <input type="text" placeholder="IFSC Code" className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-xs outline-none focus:border-primary/50 uppercase text-white" />
+                   </div>
+                   <Button variant="primary" className="w-full py-4 text-xs tracking-[0.2em] mt-6" onClick={() => alert('Bank details submitted for verification.')}>SAVE BANK DETAILS</Button>
                 </div>
              </div>
            )}
@@ -2629,7 +2657,7 @@ const AdminDashboard = ({
                     </div>
                     <div className="glass-card p-8 border-amber-500/20 bg-amber-500/5">
                        <Zap className="w-8 h-8 text-amber-500 mb-4" />
-                       <h4 className="text-sm font-bold uppercase tracking-widest mb-2">Network Hardening</h4>
+                       <h4 className="text-sm font-bold uppercase tracking-widest mb-2">Website Risk Parameter</h4>
                        <p className="text-[10px] text-white/40 leading-relaxed mb-6">Current threat level: LOW. All regional nodes are operating within normal latency parameters.</p>
                        <div className="flex items-center gap-4">
                           <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Auto-Mitigation:</span>
@@ -3883,6 +3911,10 @@ const ProfileModal = ({ isOpen, onClose }: any) => {
 const AuthLandingPage = ({ onEnter, onProviderRegister }: { onEnter: () => void; onProviderRegister: () => void }) => {
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center p-6 relative overflow-hidden monolith-grid font-sans">
+      <div className="absolute top-6 right-6 z-50">
+        <div id="google_translate_element"></div>
+      </div>
+
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 -left-20 w-96 h-96 bg-primary/10 blur-[120px] rounded-full" />
         <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-primary/5 blur-[120px] rounded-full" />
@@ -3910,7 +3942,7 @@ const AuthLandingPage = ({ onEnter, onProviderRegister }: { onEnter: () => void;
            </h1>
            
            <p className="text-lg text-white/40 leading-relaxed max-w-sm">
-             The most sophisticated elderly care network in India. Secure login required to access the elite provider database.
+             The best care network in India. Please log in to view our caregivers.
            </p>
 
            <div className="flex items-center gap-6 pt-4">
@@ -4182,7 +4214,7 @@ export default function App() {
   const aiSessionId = useMemo(() => `SID-${Math.random().toString(36).substring(2, 9).toUpperCase()}`, []);
 
   // AI Service Matching States
-  const [userLocation, setUserLocation] = useState('Nationwide');
+  const [userLocation, setUserLocation] = useState('');
   const [activeServiceTab, setActiveServiceTab] = useState('elderly');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisStep, setAnalysisStep] = useState(0);
@@ -4839,16 +4871,6 @@ const Footer = ({ onLegalClick }: any) => {
              <li><a href="#" className="hover:text-white transition-colors">User Agreement</a></li>
              <li><a href="#" className="hover:text-white transition-colors">Provider Vetting</a></li>
            </ul>
-        </div>
-
-        <div>
-           <h5 className="text-[10px] uppercase font-bold tracking-[0.3em] text-primary mb-8">Newsletter</h5>
-           <div className="flex gap-2">
-              <input type="email" placeholder="Email" className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs outline-none focus:border-primary/50" />
-              <button className="p-3 bg-white text-surface rounded-xl hover:bg-neutral-200 transition-colors">
-                <ArrowRight className="w-4 h-4" />
-              </button>
-           </div>
         </div>
       </div>
 
