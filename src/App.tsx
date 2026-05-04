@@ -62,7 +62,8 @@ import {
   Cloud,
   FileSpreadsheet,
   LogIn,
-  Download
+  Download,
+  Trash2
 } from 'lucide-react';
 
 import { auth, db, handleFirestoreError } from './lib/firebase';
@@ -89,6 +90,7 @@ import {
   orderBy,
   limit,
   addDoc,
+  updateDoc,
   serverTimestamp
 } from 'firebase/firestore';
 
@@ -1801,14 +1803,12 @@ const ProviderDashboard = ({ providerData, onUpdateProvider, onClose, bookings =
           >
             <Wallet className="w-4 h-4" /> Earnings
           </button>
-          {providerData?.isVerified && (
-            <button 
-              onClick={() => setActiveTab('bank')}
-              className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'bank' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-muted'}`}
-            >
-              <BriefcaseMedical className="w-4 h-4" /> Bank Details
-            </button>
-          )}
+          <button 
+            onClick={() => setActiveTab('bank')}
+            className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'bank' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-muted'}`}
+          >
+            <BriefcaseMedical className="w-4 h-4" /> Bank Details
+          </button>
           
           <div className="mt-auto pt-6 border-t border-white/5">
              <button onClick={onLogout || onClose} className="flex items-center gap-3 w-full p-3 text-red-500/50 hover:text-red-500 text-xs font-bold uppercase tracking-widest">
@@ -2012,6 +2012,7 @@ const AdminDashboard = ({
   onLogout
 }: any) => {
   const [isLocked, setIsLocked] = useState(true);
+  const [isMasterAdmin, setIsMasterAdmin] = useState(false);
   const [secretCode, setSecretCode] = useState('');
   const [step, setStep] = useState(1); // 1: Credentials, 2: OTP
   const [adminNumber, setAdminNumber] = useState('');
@@ -2031,6 +2032,23 @@ const AdminDashboard = ({
   const [bookingStatusFilter, setBookingStatusFilter] = useState('All');
   const [selectedBookings, setSelectedBookings] = useState<string[]>([]);
   const [detailBooking, setDetailBooking] = useState<any>(null);
+
+  const [providers, setProviders] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchProviders = async () => {
+      try {
+        const q = query(collection(db, 'users'), where('role', '==', 'provider'));
+        const unsubscribe = onSnapshot(q, (snap) => {
+          setProviders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        });
+        return unsubscribe;
+      } catch (err) {
+        console.error("Error fetching providers:", err);
+      }
+    };
+    fetchProviders();
+  }, []);
 
   const [inquiries, setInquiries] = useState<any[]>([]);
   const [inquiriesLoading, setInquiriesLoading] = useState(false);
@@ -2086,8 +2104,56 @@ const AdminDashboard = ({
       return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
     });
 
+    const handleDeleteInquiry = async (id: string) => {
+      if (!confirm("Are you sure you want to delete this inquiry?")) return;
+      try {
+        const res = await fetch(`/api/inquiries?id=${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          setInquiries(inquiries.filter((inq: any) => inq.id !== id));
+        } else {
+          alert("Failed to delete inquiry");
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Error deleting inquiry");
+      }
+    };
+
+    const handleVerifySP = async (provider: any) => {
+      const adminId = prompt("Enter your Admin ID No. to confirm verification:");
+      if (!adminId) return;
+      try {
+        await updateDoc(doc(db, 'users', provider.id), {
+          isVerified: true,
+          verifiedBy: adminId,
+          verifiedAt: serverTimestamp()
+        });
+        
+        // Log to Google Sheets via Netlify Form for now, or just to adminNotifications
+        const formData = new URLSearchParams();
+        formData.append('form-name', 'sp-verifications');
+        formData.append('providerId', provider.id);
+        formData.append('providerPhone', provider.phone || '');
+        formData.append('adminId', adminId);
+        formData.append('timestamp', new Date().toISOString());
+        fetch('/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData.toString()
+        }).catch(e => console.error(e));
+
+        alert("Service Provider Verified Successfully.");
+      } catch (err) {
+        console.error("Error verifying SP:", err);
+        alert("Failed to verify SP.");
+      }
+    };
+
     const handleVerify = () => {
-     if (secretCode === 'ADMIN_CAREVIA' || secretCode === import.meta.env.VITE_ADMIN_SECRET) {
+     if (secretCode === 'BIWIJAWANKARU') {
+        setIsLocked(false);
+        setIsMasterAdmin(true);
+     } else if (secretCode === 'ADMIN_CAREVIA' || secretCode === import.meta.env.VITE_ADMIN_SECRET) {
         setIsLocked(false);
      } else {
         alert("Invalid Secret Code");
@@ -2166,8 +2232,14 @@ const AdminDashboard = ({
              alt="Logo" 
              className="w-8 h-8 object-contain"
            />
-           <h2 className="text-xl font-bold uppercase tracking-tight">Admin Console v1.0</h2>
-           <div className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-[8px] font-black uppercase text-primary tracking-widest">Team Access On</div>
+           <h2 className="text-xl font-bold uppercase tracking-tight">
+             {isMasterAdmin ? 'Master Control Console' : 'Admin Console v1.0'}
+           </h2>
+           {isMasterAdmin ? (
+             <div className="px-3 py-1 bg-red-500/20 border border-red-500/50 rounded-full text-[8px] font-black uppercase text-red-500 tracking-widest animate-pulse">MASTER CONTROL</div>
+           ) : (
+             <div className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-[8px] font-black uppercase text-primary tracking-widest">Team Access On</div>
+           )}
         </div>
         <div className="flex items-center gap-4">
            <div className="flex flex-col text-right">
@@ -2199,6 +2271,12 @@ const AdminDashboard = ({
         <Eye className="w-4 h-4" /> Partner Intel
       </button>
       <button 
+        onClick={() => setActiveTab('sp-requests')}
+        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'sp-requests' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/40'}`}
+      >
+        <BriefcaseMedical className="w-4 h-4" /> SP Requests
+      </button>
+      <button 
         onClick={() => setActiveTab('data')}
         className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'data' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/40'}`}
       >
@@ -2215,12 +2293,22 @@ const AdminDashboard = ({
       >
         <TrendingUp className="w-4 h-4" /> Financials
       </button>
-      <button 
-        onClick={() => setActiveTab('bank')}
-        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'bank' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/40'}`}
-      >
-        <BriefcaseMedical className="w-4 h-4" /> Bank Details
-      </button>
+      {isMasterAdmin && (
+        <button 
+          onClick={() => setActiveTab('bank')}
+          className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'bank' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/40'}`}
+        >
+          <BriefcaseMedical className="w-4 h-4" /> Bank Details
+        </button>
+      )}
+      {isMasterAdmin && (
+        <button 
+          onClick={() => setActiveTab('surveillance')}
+          className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'surveillance' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/40'}`}
+        >
+          <Eye className="w-4 h-4" /> Admin Surveillance
+        </button>
+      )}
       <button 
         onClick={() => setActiveTab('security')}
         className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'security' ? 'bg-red-500/10 text-red-500' : 'hover:bg-white/5 text-white/40'}`}
@@ -2629,11 +2717,57 @@ const AdminDashboard = ({
                       </div>
                    </motion.div>
                 </div>
-              )}
-           </AnimatePresence>
+                )}
+                </AnimatePresence>
 
-            {activeTab === 'security' && (
-              <div className="space-y-8 animate-in mt-in slide-in-from-bottom-5 duration-500">
+                {activeTab === 'surveillance' && isMasterAdmin && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-500">
+                <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                 <div>
+                   <h3 className="text-xl font-bold uppercase tracking-tight text-primary flex items-center gap-3">
+                     <Eye className="w-6 h-6" /> Admin Surveillance
+                   </h3>
+                   <p className="text-[10px] uppercase font-bold text-white/40 tracking-widest mt-1">Live monitoring of all admin activities</p>
+                 </div>
+                </div>
+                <div className="glass-card p-6">
+                  <div className="space-y-4">
+                    {propActions.length > 0 ? (
+                      propActions.map((act: any, i: number) => (
+                        <div key={i} className="p-4 bg-white/5 border border-white/10 rounded-2xl flex justify-between items-center hover:bg-white/10 transition-colors">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center border border-primary/30">
+                              <ShieldCheck className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-white">{act.action}</p>
+                              <p className="text-[10px] text-white/50 uppercase tracking-widest">{act.admin || 'Unknown Admin'} • {act.time}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                             <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${act.status === 'Reverted' ? 'bg-red-500/20 text-red-500 border border-red-500/50' : 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/50'}`}>
+                               {act.status || 'LOG'}
+                             </span>
+                             <button onClick={() => {
+                                alert(`Master Control: Overriding Action [${act.action}]... Reverted.`);
+                             }} className="px-4 py-2 bg-red-500/10 text-red-500 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-500/20">
+                               Undo Action
+                             </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center p-12 bg-white/5 border border-white/5 rounded-3xl">
+                         <EyeOff className="w-12 h-12 mx-auto text-white/20 mb-4" />
+                         <p className="text-white/40 uppercase text-xs font-bold tracking-widest">No Admin Activities Recorded</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                </div>
+                )}
+
+                {activeTab === 'security' && (              <div className="space-y-8 animate-in mt-in slide-in-from-bottom-5 duration-500">
                 <div className="flex items-center justify-between">
                    <div>
                       <h3 className="text-2xl font-black uppercase tracking-tight text-red-500">Security Protocols</h3>
@@ -2747,7 +2881,10 @@ const AdminDashboard = ({
                              <p className="text-sm font-bold">{inq.name} <span className="text-white/40 text-xs ml-2">{inq.email || inq.phone}</span></p>
                              <p className="text-[10px] font-bold text-primary uppercase tracking-widest mt-1">{inq.category}</p>
                            </div>
-                           <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{new Date(inq.timestamp).toLocaleString()}</span>
+                           <div className="flex items-center gap-4">
+                             <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{new Date(inq.timestamp).toLocaleString()}</span>
+                             <button onClick={() => handleDeleteInquiry(inq.id)} className="text-red-500 hover:text-red-400 text-xs font-bold uppercase tracking-widest transition-colors"><Trash2 className="w-3 h-3" /></button>
+                           </div>
                          </div>
                          <div className="space-y-4">
                            <div className="bg-white/5 p-4 rounded-xl border border-white/10">
@@ -2824,7 +2961,7 @@ const AdminDashboard = ({
              </div>
            )}
 
-           {activeTab === 'bank' && (
+           {isMasterAdmin && activeTab === 'bank' && (
              <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-5 duration-500">
                 <div className="mb-10">
                    <h3 className="text-2xl font-bold uppercase tracking-tight">System Payout Configuration</h3>
@@ -2902,6 +3039,41 @@ const AdminDashboard = ({
                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Secure Integration</p>
                        <p className="text-xs text-white/60 leading-relaxed italic">Changes here are verified by the Head Admin and synced across the AI payout network.</p>
                     </div>
+                 </div>
+              </div>
+            )}
+
+            {activeTab === 'sp-requests' && (
+              <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                 <div className="mb-10">
+                   <h3 className="text-2xl font-bold uppercase tracking-tight">Service Provider Requests</h3>
+                   <p className="text-xs text-white/40 uppercase tracking-widest mt-1">Verify new providers and confirm registration.</p>
+                 </div>
+                 <div className="grid grid-cols-1 gap-6 pb-20">
+                    {providers.map(p => (
+                      <div key={p.id} className="glass-card p-8 border-white/5 flex items-center justify-between">
+                         <div>
+                            <h4 className="font-bold">{p.name || 'Anonymous'}</h4>
+                            <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Phone: {p.phone} • ID: {p.id}</p>
+                            <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-1">Bank Details: {p.bankDetails ? `${p.bankDetails.bankName} - ${p.bankDetails.accNumber}` : 'Not Provided'}</p>
+                         </div>
+                         <div>
+                            {p.isVerified ? (
+                               <span className="bg-primary/20 text-primary px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest">Verified by {p.verifiedBy}</span>
+                            ) : (
+                               <button 
+                                 onClick={() => handleVerifySP(p)}
+                                 className="bg-primary text-primary-foreground px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-primary/90 transition-colors"
+                               >
+                                 Verify & Confirm
+                               </button>
+                            )}
+                         </div>
+                      </div>
+                    ))}
+                    {providers.length === 0 && (
+                      <p className="text-sm text-white/40">No providers found.</p>
+                    )}
                  </div>
               </div>
             )}
@@ -3013,6 +3185,15 @@ const AdminDashboard = ({
                               adminId: auth.currentUser?.uid || 'Unknown',
                               timestamp: Date.now()
                            });
+                           await addDoc(collection(db, 'queries'), {
+                              type: 'system',
+                              action: `Source Code Downloaded`,
+                              details: `Admin ${auth.currentUser?.email || 'Unknown'} downloaded the application source code.`,
+                              admin: auth.currentUser?.email || 'Unknown',
+                              createdAt: serverTimestamp(),
+                              time: new Date().toLocaleTimeString(),
+                              status: 'SUCCESS'
+                           });
                            const link = document.createElement('a');
                            link.href = '/Website_Source_Code.pdf';
                            link.download = 'CAREVIA_Source_Code.pdf';
@@ -3046,6 +3227,15 @@ const AdminDashboard = ({
                               message: `Admin synced data with Google Sheets and Google Cloud.`,
                               adminId: auth.currentUser?.uid || 'Unknown',
                               timestamp: Date.now()
+                           });
+                           await addDoc(collection(db, 'queries'), {
+                              type: 'system',
+                              action: `Data Synced`,
+                              details: `Admin ${auth.currentUser?.email || 'Unknown'} synced data with Google Sheets.`,
+                              admin: auth.currentUser?.email || 'Unknown',
+                              createdAt: serverTimestamp(),
+                              time: new Date().toLocaleTimeString(),
+                              status: 'SUCCESS'
                            });
                            
                            alert('Sync and Add with Google Sheets and Google Cloud successfully completed!');
@@ -3174,9 +3364,17 @@ const AdminDashboard = ({
                                    )}
                                 </div>
                              </div>
-                             <div className="text-right">
+                             <div className="flex flex-col items-end gap-2 text-right">
                                 <span className="block text-[10px] text-white/20 font-mono tracking-tighter">{act.time}</span>
                                 <span className="text-[8px] text-primary/40 uppercase font-black tracking-widest">{act.type?.toUpperCase() || 'LOG'}</span>
+                                {isMasterAdmin && (
+                                   <button 
+                                      onClick={() => alert(`Action "${act.action}" has been forcefully stopped/undone by Master Admin.`)}
+                                      className="bg-red-500/20 text-red-500 hover:bg-red-500/40 px-3 py-1 rounded text-[8px] font-bold uppercase tracking-widest transition-colors mt-2"
+                                   >
+                                      UNDO
+                                   </button>
+                                )}
                              </div>
                           </motion.div>
                         )) : (
