@@ -92,6 +92,21 @@ Respond directly to the customer in a warm, professional, and highly persuasive 
     }
   }
 
+  if (req.method === 'DELETE') {
+    try {
+      const url = new URL(req.url);
+      const id = url.searchParams.get('id');
+      if (!id) {
+        return Response.json({ error: 'ID is required' }, { status: 400 });
+      }
+      await store.delete(id);
+      return Response.json({ success: true });
+    } catch (error: any) {
+      console.error("Inquiries DELETE error:", error);
+      return Response.json({ error: error.message }, { status: 500 });
+    }
+  }
+
   return Response.json({ error: 'Method not allowed' }, { status: 405 });
 };
 
