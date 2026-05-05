@@ -1,0 +1,1 @@
+ALTER TABLE "sp_applications" ADD COLUMN "email" text;

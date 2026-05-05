@@ -2219,6 +2219,18 @@ const AdminDashboard = ({
           body: formData.toString()
         }).catch(e => console.error(e));
 
+        // Send Confirmation SMS/Email
+        await fetch('/api/send-sp-confirmation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone: provider.phone,
+            email: provider.email || '', // In case provider has email
+            spId: generatedSpId,
+            name: provider.name
+          })
+        }).catch(e => console.error("Error sending SP confirmation:", e));
+
         alert(`Service Provider Verified Successfully.\nGenerated SP ID NO: ${generatedSpId}`);
       } catch (err) {
         console.error("Error verifying SP:", err);
@@ -2489,8 +2501,8 @@ const AdminDashboard = ({
                       <p className="text-3xl font-bold">0</p>
                    </div>
                    <div className="glass-card p-6 border-white/10 text-center">
-                      <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Active Care</p>
-                      <p className="text-3xl font-bold">0</p>
+                      <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Active Caregiver</p>
+                      <p className="text-3xl font-bold">{providers.filter(p => p.status === 'Confirmed').length}</p>
                    </div>
                    <div className="glass-card p-6 border-white/10 text-center">
                       <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2 text-primary">Revenue</p>
@@ -3354,15 +3366,33 @@ const AdminDashboard = ({
                   <div className="flex flex-col md:flex-row gap-6 mb-8">
                      <div className="flex-1 glass-card p-8 border-emerald-500/20 bg-emerald-500/5 group hover:bg-emerald-500/10 cursor-pointer transition-all" onClick={async () => {
                         try {
-                           const headers = ['Action', 'Admin', 'Time', 'Type', 'Status'];
-                           const rows = propActions.map((a: any) => [a.action, a.admin, a.time, a.type, a.status || 'LOG']);
-                           await exportToSheets(`CareVia_Logs_${new Date().toLocaleDateString()}`, headers, rows);
-                           alert('Exported to Google Sheets successfully!');
+                           const dateStr = new Date().toLocaleDateString().replace(/\//g, '-');
+
+                           // 1. Export Logs
+                           const logHeaders = ['Action', 'Admin', 'Time', 'Type', 'Status'];
+                           const logRows = propActions.map((a: any) => [a.action, a.admin, a.time, a.type, a.status || 'LOG']);
+                           await exportToSheets(`Logs_${dateStr}`, logHeaders, logRows);
+
+                           // 2. Export Bookings
+                           const bookingHeaders = ['ID', 'Customer', 'Service', 'Status', 'Date', 'Time', 'Amount'];
+                           const bookingRows = bookings.map((b: any) => [b.id, b.customer, b.service, b.status, b.date, b.time, b.amount || 0]);
+                           await exportToSheets(`Bookings_${dateStr}`, bookingHeaders, bookingRows);
+
+                           // 3. Export Providers
+                           const providerHeaders = ['SP ID', 'Name', 'Phone', 'Status', 'Verified'];
+                           const providerRows = providers.map((p: any) => [p.spId || 'N/A', p.name, p.phone, p.status, p.isVerified ? 'Yes' : 'No']);
+                           await exportToSheets(`Providers_${dateStr}`, providerHeaders, providerRows);
+
+                           // 4. Export Inquiries
+                           const inquiryHeaders = ['Name', 'Phone', 'Type', 'Status', 'Date'];
+                           const inquiryRows = inquiries.map((i: any) => [i.name, i.phone, i.type, i.status, i.createdAt ? new Date(i.createdAt).toLocaleString() : 'N/A']);
+                           await exportToSheets(`Inquiries_${dateStr}`, inquiryHeaders, inquiryRows);
+
+                           alert('Exported all website data to Google Sheets successfully!');
                         } catch (err: any) {
                            alert(err.message);
                         }
-                     }}>
-                        <div className="flex items-center justify-between mb-4">
+                     }}>                        <div className="flex items-center justify-between mb-4">
                            <FileSpreadsheet className="w-8 h-8 text-emerald-500 group-hover:scale-110 transition-transform" />
                            <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full">Excel Sync</span>
                         </div>
@@ -3935,6 +3965,7 @@ const ProviderRegistrationModal = ({ isOpen, onClose }: any) => {
   const [form, setForm] = useState({
     name: '',
     phone: '',
+    email: '',
     address: '',
     education: '',
     aadhaar: null as File | null,
@@ -3976,6 +4007,7 @@ const ProviderRegistrationModal = ({ isOpen, onClose }: any) => {
         body: JSON.stringify({
           name: form.name,
           phone: form.phone,
+          email: form.email,
           address: form.address,
           education: form.education,
           aadhaarBase64,
@@ -4047,7 +4079,7 @@ const ProviderRegistrationModal = ({ isOpen, onClose }: any) => {
                    </div>
                    <div>
                       <label className="label-bold mb-2 block">Phone Number</label>
-                      <input 
+                      <input
                         type="tel"
                         value={form.phone}
                         onChange={(e) => setForm({...form, phone: e.target.value})}
@@ -4055,7 +4087,16 @@ const ProviderRegistrationModal = ({ isOpen, onClose }: any) => {
                         placeholder="9999999999"
                       />
                    </div>
-                   <div className="md:col-span-2">
+                   <div>
+                      <label className="label-bold mb-2 block">Email Address</label>
+                      <input
+                        type="email"
+                        value={form.email}
+                        onChange={(e) => setForm({...form, email: e.target.value})}
+                        className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors"
+                        placeholder="provider@example.com"
+                      />
+                   </div>                   <div className="md:col-span-2">
                       <label className="label-bold mb-2 block">Educational Qualification</label>
                       <div className="relative">
                          <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
@@ -4142,9 +4183,9 @@ const ProviderRegistrationModal = ({ isOpen, onClose }: any) => {
                 <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-8">
                    <ShieldCheck className="w-12 h-12 text-green-500 animate-pulse" />
                 </div>
-                <h4 className="text-2xl font-bold uppercase tracking-tight">Application Received!</h4>
-                <p className="text-sm text-white/70 leading-relaxed max-w-md mx-auto">
-                   Our vetting team will verify your credentials and documents within <span className="text-primary font-bold">24-48 hours</span>. We will contact you at your registered mobile number for a quick orientation.
+                <h4 className="text-2xl font-bold uppercase tracking-tight">REQUEST PENDING</h4>
+                <p className="text-sm text-white/70 leading-relaxed max-w-md mx-auto uppercase">
+                   Their application will be confirmed after the verification process is completed. They will get the notification after the registration is complete and after that they will get an SP ID to log in with.
                 </p>
                 <div className="grid grid-cols-2 gap-4 max-w-xs mx-auto pt-6">
                    <div className="p-4 bg-white/5 rounded-xl border border-white/10">

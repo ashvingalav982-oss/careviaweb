@@ -3,6 +3,7 @@ import { pgTable, serial, text, timestamp, boolean } from "drizzle-orm/pg-core";
 export const spApplications = pgTable("sp_applications", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  email: text("email"),
   phone: text("phone").notNull(),
   address: text("address"),
   education: text("education"),
