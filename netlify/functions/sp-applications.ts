@@ -12,7 +12,7 @@ export default async (req: Request) => {
     }
 
     if (req.method === "POST") {
-      const { name, phone, address, education, aadhaarBase64, panBase64, aadhaarType, panType } = await req.json();
+      const { name, phone, email, address, education, aadhaarBase64, panBase64, aadhaarType, panType } = await req.json();
       
       let aadhaarBlobKey = null;
       let panBlobKey = null;
@@ -35,7 +35,7 @@ export default async (req: Request) => {
       }
 
       const [application] = await db.insert(spApplications).values({ 
-        name, phone, address, education, aadhaarBlobKey, panBlobKey 
+        name, phone, email, address, education, aadhaarBlobKey, panBlobKey 
       }).returning();
       
       return Response.json(application, { status: 201 });

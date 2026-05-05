@@ -78,33 +78,40 @@ export const uploadToDrive = async (fileName: string, content: string, mimeType:
 };
 
 /**
- * Exports data to a new Google Sheet
+ * Exports data to the linked Google Sheet
  */
 export const exportToSheets = async (title: string, headers: string[], rows: any[][]) => {
   const token = await getAccessToken();
+  const spreadsheetId = '11w11KXWs6S71Tnm8hRtRqatpCap1uzT5_c0CrKzZ3Xk';
 
-  // 1. Create a new Spreadsheet
-  const createRes = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      properties: { title }
-    }),
-  });
-
-  if (!createRes.ok) {
-    throw new Error('Failed to create spreadsheet: ' + await createRes.text());
+  // We append to the existing spreadsheet instead of creating a new one.
+  // First, we can try to add a new sheet (tab) with the title.
+  try {
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requests: [
+          {
+            addSheet: {
+              properties: {
+                title: title
+              }
+            }
+          }
+        ]
+      })
+    });
+  } catch (e) {
+    console.error("Sheet might already exist, proceeding to append", e);
   }
 
-  const spreadsheet = await createRes.json();
-  const spreadsheetId = spreadsheet.spreadsheetId;
-
-  // 2. Add data
+  // Add data
   const values = [headers, ...rows];
-  const updateRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A1:append?valueInputOption=RAW`, {
+  const updateRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/'${title}'!A1:append?valueInputOption=RAW`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -119,5 +126,5 @@ export const exportToSheets = async (title: string, headers: string[], rows: any
     throw new Error('Failed to update spreadsheet: ' + await updateRes.text());
   }
 
-  return spreadsheet;
+  return { spreadsheetId };
 };
