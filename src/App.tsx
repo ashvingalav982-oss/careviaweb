@@ -2373,13 +2373,17 @@ const AdminDashboard = ({
       >
         <Eye className="w-4 h-4" /> Partner Intel
       </button>
-      <button 
+      <button
         onClick={() => setActiveTab('sp-requests')}
         className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'sp-requests' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/60'}`}
       >
         <BriefcaseMedical className="w-4 h-4" /> SP Requests
-      </button>
-      <button 
+        {providers.filter(p => !p.isVerified && p.status !== 'Rejected').length > 0 && (
+          <span className="ml-auto bg-amber-500 text-black px-2 py-0.5 rounded-full text-[10px] font-bold">
+            {providers.filter(p => !p.isVerified && p.status !== 'Rejected').length}
+          </span>
+        )}
+      </button>      <button 
         onClick={() => setActiveTab('data')}
         className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'data' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/60'}`}
       >
@@ -3149,42 +3153,85 @@ const AdminDashboard = ({
             {activeTab === 'sp-requests' && (
               <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
                  <div className="mb-10">
-                   <h3 className="text-2xl font-bold uppercase tracking-tight">Service Provider Requests</h3>
+                   <h3 className="text-2xl font-bold uppercase tracking-tight flex items-center gap-3">
+                     Service Provider Requests
+                     {providers.filter(p => !p.isVerified && p.status !== 'Rejected').length > 0 && (
+                       <span className="text-sm bg-amber-500/20 text-amber-500 px-3 py-1 rounded-full flex items-center gap-2">
+                         <Clock className="w-4 h-4" /> {providers.filter(p => !p.isVerified && p.status !== 'Rejected').length} Pending
+                       </span>
+                     )}
+                   </h3>
                    <p className="text-xs text-white/60 uppercase tracking-widest mt-1">Verify new providers and confirm registration.</p>
                  </div>
                  <div className="grid grid-cols-1 gap-6 pb-20">
                     {providers.map(p => (
-                      <div key={p.id} className="glass-card p-8 border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
-                         <div>
-                            <h4 className="font-bold flex items-center gap-2">
-                               {p.name || 'Anonymous'}
-                               {p.status && <span className={`text-[8px] px-2 py-0.5 rounded-full uppercase tracking-widest ${p.status === 'Confirmed' ? 'bg-green-500/20 text-green-500' : p.status === 'Rejected' ? 'bg-red-500/20 text-red-500' : 'bg-amber-500/20 text-amber-500'}`}>{p.status}</span>}
-                            </h4>
-                            <p className="text-[10px] text-white/60 font-bold uppercase tracking-widest">Phone: {p.phone} • DB ID: {p.id}</p>
-                            <p className="text-[10px] text-primary font-bold uppercase tracking-widest mt-1">SP ID NO: {p.spId || 'N/A'} • Education: {p.education || 'N/A'}</p>
+                      <div key={p.id} className="glass-card p-8 border-white/5 flex flex-col gap-4">
+                         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                            <div>
+                               <h4 className="font-bold flex items-center gap-2 text-lg">
+                                  {p.name || 'Anonymous'}
+                                  {p.status && <span className={`text-[10px] px-3 py-1 rounded-full uppercase tracking-widest ${p.status === 'Confirmed' ? 'bg-green-500/20 text-green-500' : p.status === 'Rejected' ? 'bg-red-500/20 text-red-500' : 'bg-amber-500/20 text-amber-500'}`}>{p.status}</span>}
+                               </h4>
+                               <p className="text-xs text-white/60 font-bold uppercase tracking-widest mt-2">Phone: {p.phone} • DB ID: {p.id}</p>
+                               <p className="text-xs text-primary font-bold uppercase tracking-widest mt-1">SP ID NO: {p.spId || 'N/A'}</p>
+                            </div>
+                            <div className="flex gap-2">
+                               {p.isVerified ? (
+                                  <span className="bg-primary/20 text-primary px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest">Verified by {p.verifiedBy}</span>
+                               ) : p.status === 'Rejected' ? (
+                                  <span className="bg-red-500/20 text-red-500 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest">Rejected</span>
+                               ) : (
+                                  <>
+                                    <button
+                                      onClick={() => handleRejectSP(p)}
+                                      className="bg-red-500/10 text-red-500 border border-red-500/30 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-colors"
+                                    >
+                                      Reject
+                                    </button>
+                                    <button
+                                      onClick={() => handleVerifySP(p)}
+                                      className="bg-primary text-primary-foreground px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-primary/90 transition-colors"
+                                    >
+                                      Verify & Confirm
+                                    </button>
+                                  </>
+                               )}
+                            </div>
                          </div>
-                         <div className="flex gap-2">
-                            {p.isVerified ? (
-                               <span className="bg-primary/20 text-primary px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest">Verified by {p.verifiedBy}</span>
-                            ) : p.status === 'Rejected' ? (
-                               <span className="bg-red-500/20 text-red-500 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest">Rejected</span>
-                            ) : (
-                               <>
-                                 <button 
-                                   onClick={() => handleRejectSP(p)}
-                                   className="bg-red-500/10 text-red-500 border border-red-500/30 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-colors"
-                                 >
-                                   Reject
-                                 </button>
-                                 <button 
-                                   onClick={() => handleVerifySP(p)}
-                                   className="bg-primary text-primary-foreground px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-primary/90 transition-colors"
-                                 >
-                                   Verify & Confirm
-                                 </button>
-                               </>
-                            )}
+                         <div className="grid md:grid-cols-2 gap-4 mt-4 bg-white/5 p-4 rounded-xl text-sm">
+                            <div>
+                               <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-1">Education / Qualifications</p>
+                               <p>{p.education || 'Not provided'}</p>
+                            </div>
+                            <div>
+                               <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-1">Address</p>
+                               <p>{p.address || 'Not provided'}</p>
+                            </div>
                          </div>
+                         {(p.aadhaarBlobKey || p.panBlobKey) && (
+                            <div className="flex flex-wrap gap-4 mt-2">
+                               {p.aadhaarBlobKey && (
+                                 <a 
+                                   href={`/api/sp-documents?key=${p.aadhaarBlobKey}`} 
+                                   target="_blank" 
+                                   rel="noreferrer"
+                                   className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-primary/20 transition"
+                                 >
+                                   <FileText className="w-4 h-4" /> View Aadhaar
+                                 </a>
+                               )}
+                               {p.panBlobKey && (
+                                 <a 
+                                   href={`/api/sp-documents?key=${p.panBlobKey}`} 
+                                   target="_blank" 
+                                   rel="noreferrer"
+                                   className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-primary/20 transition"
+                                 >
+                                   <FileText className="w-4 h-4" /> View PAN
+                                 </a>
+                               )}
+                            </div>
+                         )}
                       </div>
                     ))}
                     {providers.length === 0 && (
@@ -3193,7 +3240,6 @@ const AdminDashboard = ({
                  </div>
               </div>
             )}
-
             {activeTab === 'intel' && (
               <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
                  <div className="flex justify-between items-center">
@@ -3851,9 +3897,30 @@ const ProviderRegistrationModal = ({ isOpen, onClose }: any) => {
     setForm(prev => ({ ...prev, [field]: file }));
   };
 
+  const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve((reader.result as string).split(',')[1]);
+    reader.onerror = error => reject(error);
+  });
+
   const handleRegister = async () => {
     if (!form.name || !form.phone) return alert("Please provide at least Name and Phone Number");
     try {
+      let aadhaarBase64 = null;
+      let aadhaarType = null;
+      let panBase64 = null;
+      let panType = null;
+
+      if (form.aadhaar) {
+        aadhaarBase64 = await toBase64(form.aadhaar);
+        aadhaarType = form.aadhaar.type;
+      }
+      if (form.pan) {
+        panBase64 = await toBase64(form.pan);
+        panType = form.pan.type;
+      }
+
       // 1. Save SP application to Netlify Database
       const res = await fetch('/api/sp-applications', {
         method: 'POST',
@@ -3862,7 +3929,11 @@ const ProviderRegistrationModal = ({ isOpen, onClose }: any) => {
           name: form.name,
           phone: form.phone,
           address: form.address,
-          education: form.education
+          education: form.education,
+          aadhaarBase64,
+          aadhaarType,
+          panBase64,
+          panType
         })
       });
       
