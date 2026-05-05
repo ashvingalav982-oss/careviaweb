@@ -2,6 +2,7 @@ import type { Config } from "@netlify/functions";
 import { db } from "../../db/index.js";
 import { spApplications } from "../../db/schema.js";
 import { eq, desc } from "drizzle-orm";
+import { getStore } from "@netlify/blobs";
 
 export default async (req: Request) => {
   try {
@@ -11,8 +12,32 @@ export default async (req: Request) => {
     }
 
     if (req.method === "POST") {
-      const { name, phone, address, education } = await req.json();
-      const [application] = await db.insert(spApplications).values({ name, phone, address, education }).returning();
+      const { name, phone, address, education, aadhaarBase64, panBase64, aadhaarType, panType } = await req.json();
+      
+      let aadhaarBlobKey = null;
+      let panBlobKey = null;
+      const store = getStore('sp-documents');
+
+      if (aadhaarBase64) {
+        aadhaarBlobKey = `aadhaar_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        const buffer = Buffer.from(aadhaarBase64, 'base64');
+        await store.set(aadhaarBlobKey, buffer, {
+          metadata: { contentType: aadhaarType || 'application/octet-stream' }
+        });
+      }
+
+      if (panBase64) {
+        panBlobKey = `pan_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        const buffer = Buffer.from(panBase64, 'base64');
+        await store.set(panBlobKey, buffer, {
+          metadata: { contentType: panType || 'application/octet-stream' }
+        });
+      }
+
+      const [application] = await db.insert(spApplications).values({ 
+        name, phone, address, education, aadhaarBlobKey, panBlobKey 
+      }).returning();
+      
       return Response.json(application, { status: 201 });
     }
 
