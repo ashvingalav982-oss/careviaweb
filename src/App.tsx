@@ -2226,6 +2226,24 @@ const AdminDashboard = ({
       }
     };
 
+    const handleDeleteSP = async (provider: any) => {
+      if (confirm(`Are you sure you want to permanently delete the application for ${provider.name || "Anonymous"}?`)) {
+        try {
+          const res = await fetch("/api/sp-applications", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: provider.id })
+          });
+          if (res.ok) {
+            setProviders(prev => prev.filter(p => p.id !== provider.id));
+          }
+        } catch (err) {
+          console.error("Error deleting SP:", err);
+          alert("Failed to delete application.");
+        }
+      }
+    };
+
     const handleRejectSP = async (provider: any) => {
       const confirmReject = window.confirm("Are you sure you want to reject this application?");
       if (!confirmReject) return;
@@ -3177,6 +3195,7 @@ const AdminDashboard = ({
                                <p className="text-xs text-primary font-bold uppercase tracking-widest mt-1">SP ID NO: {p.spId || 'N/A'}</p>
                             </div>
                             <div className="flex gap-2">
+                               <button onClick={() => handleDeleteSP(p)} className="bg-red-500/10 text-red-500 border border-red-500/30 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-colors">Delete</button>
                                {p.isVerified ? (
                                   <span className="bg-primary/20 text-primary px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest">Verified by {p.verifiedBy}</span>
                                ) : p.status === 'Rejected' ? (

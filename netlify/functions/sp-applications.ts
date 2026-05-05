@@ -41,6 +41,13 @@ export default async (req: Request) => {
       return Response.json(application, { status: 201 });
     }
 
+    if (req.method === "DELETE") {
+      const { id } = await req.json();
+      const [deleted] = await db.delete(spApplications).where(eq(spApplications.id, id)).returning();
+      if (!deleted) return new Response("Application not found", { status: 404 });
+      return Response.json(deleted);
+    }
+
     if (req.method === "PUT") {
       const { id, status, spId, isVerified, verifiedBy } = await req.json();
       
