@@ -2378,11 +2378,9 @@ const AdminDashboard = ({
         className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'sp-requests' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/60'}`}
       >
         <BriefcaseMedical className="w-4 h-4" /> SP Requests
-        {providers.filter(p => !p.isVerified && p.status !== 'Rejected').length > 0 && (
-          <span className="ml-auto bg-amber-500 text-black px-2 py-0.5 rounded-full text-[10px] font-bold">
-            {providers.filter(p => !p.isVerified && p.status !== 'Rejected').length}
-          </span>
-        )}
+        <span className={`ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold ${providers.filter(p => !p.isVerified && p.status !== 'Rejected').length > 0 ? 'bg-amber-500 text-black' : 'bg-white/10 text-white/50'}`}>
+          {providers.filter(p => !p.isVerified && p.status !== 'Rejected').length}
+        </span>
       </button>      <button 
         onClick={() => setActiveTab('data')}
         className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'data' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/60'}`}
@@ -3153,15 +3151,18 @@ const AdminDashboard = ({
             {activeTab === 'sp-requests' && (
               <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
                  <div className="mb-10">
-                   <h3 className="text-2xl font-bold uppercase tracking-tight flex items-center gap-3">
-                     Service Provider Requests
-                     {providers.filter(p => !p.isVerified && p.status !== 'Rejected').length > 0 && (
+                   <div className="flex flex-col gap-2">
+                     <h3 className="text-2xl font-bold uppercase tracking-tight flex items-center gap-3">
+                       Service Provider Requests
                        <span className="text-sm bg-amber-500/20 text-amber-500 px-3 py-1 rounded-full flex items-center gap-2">
                          <Clock className="w-4 h-4" /> {providers.filter(p => !p.isVerified && p.status !== 'Rejected').length} Pending
                        </span>
-                     )}
-                   </h3>
-                   <p className="text-xs text-white/60 uppercase tracking-widest mt-1">Verify new providers and confirm registration.</p>
+                       <span className="text-sm bg-primary/20 text-primary px-3 py-1 rounded-full flex items-center gap-2">
+                         {providers.length} Total
+                       </span>
+                     </h3>
+                     <p className="text-xs text-white/60 uppercase tracking-widest mt-1">Verify new providers and confirm registration.</p>
+                   </div>
                  </div>
                  <div className="grid grid-cols-1 gap-6 pb-20">
                     {providers.map(p => (
@@ -3207,28 +3208,56 @@ const AdminDashboard = ({
                                <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-1">Address</p>
                                <p>{p.address || 'Not provided'}</p>
                             </div>
+                            <div>
+                               <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-1">Application Date</p>
+                               <p>{p.createdAt ? new Date(p.createdAt).toLocaleString() : 'Not provided'}</p>
+                            </div>
                          </div>
                          {(p.aadhaarBlobKey || p.panBlobKey) && (
-                            <div className="flex flex-wrap gap-4 mt-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                                {p.aadhaarBlobKey && (
-                                 <a 
-                                   href={`/api/sp-documents?key=${p.aadhaarBlobKey}`} 
-                                   target="_blank" 
-                                   rel="noreferrer"
-                                   className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-primary/20 transition"
-                                 >
-                                   <FileText className="w-4 h-4" /> View Aadhaar
-                                 </a>
+                                 <div className="space-y-2 bg-white/5 p-4 rounded-xl">
+                                   <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold flex items-center gap-2">
+                                     <FileText className="w-3 h-3" /> Aadhaar Document
+                                   </p>
+                                   <div className="bg-black/50 rounded-lg overflow-hidden border border-white/10 flex items-center justify-center min-h-[200px]">
+                                     <img 
+                                       src={`/api/sp-documents?key=${p.aadhaarBlobKey}`} 
+                                       alt="Aadhaar Document" 
+                                       className="max-w-full max-h-[300px] object-contain"
+                                       onError={(e) => {
+                                          (e.target as HTMLElement).style.display = 'none';
+                                          (e.target as HTMLElement).nextElementSibling?.classList.remove('hidden');
+                                       }}
+                                     />
+                                     <div className="hidden flex flex-col items-center p-4">
+                                        <p className="text-xs text-white/60 mb-2">Image could not be loaded</p>
+                                        <a href={`/api/sp-documents?key=${p.aadhaarBlobKey}`} target="_blank" rel="noreferrer" className="text-primary text-xs underline">Download / View File</a>
+                                     </div>
+                                   </div>
+                                 </div>
                                )}
                                {p.panBlobKey && (
-                                 <a 
-                                   href={`/api/sp-documents?key=${p.panBlobKey}`} 
-                                   target="_blank" 
-                                   rel="noreferrer"
-                                   className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-primary/20 transition"
-                                 >
-                                   <FileText className="w-4 h-4" /> View PAN
-                                 </a>
+                                 <div className="space-y-2 bg-white/5 p-4 rounded-xl">
+                                   <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold flex items-center gap-2">
+                                     <FileText className="w-3 h-3" /> PAN Document
+                                   </p>
+                                   <div className="bg-black/50 rounded-lg overflow-hidden border border-white/10 flex items-center justify-center min-h-[200px]">
+                                     <img 
+                                       src={`/api/sp-documents?key=${p.panBlobKey}`} 
+                                       alt="PAN Document" 
+                                       className="max-w-full max-h-[300px] object-contain"
+                                       onError={(e) => {
+                                          (e.target as HTMLElement).style.display = 'none';
+                                          (e.target as HTMLElement).nextElementSibling?.classList.remove('hidden');
+                                       }}
+                                     />
+                                     <div className="hidden flex flex-col items-center p-4">
+                                        <p className="text-xs text-white/60 mb-2">Image could not be loaded</p>
+                                        <a href={`/api/sp-documents?key=${p.panBlobKey}`} target="_blank" rel="noreferrer" className="text-primary text-xs underline">Download / View File</a>
+                                     </div>
+                                   </div>
+                                 </div>
                                )}
                             </div>
                          )}
