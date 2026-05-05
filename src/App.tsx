@@ -91,6 +91,7 @@ import {
   limit,
   addDoc,
   updateDoc,
+  getDocs,
   serverTimestamp
 } from 'firebase/firestore';
 
@@ -2083,16 +2084,18 @@ const AdminDashboard = ({
   useEffect(() => {
     const fetchProviders = async () => {
       try {
-        const q = query(collection(db, 'users'), where('role', '==', 'provider'));
-        const unsubscribe = onSnapshot(q, (snap) => {
-          setProviders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-        });
-        return unsubscribe;
+        const res = await fetch('/api/sp-applications');
+        if (res.ok) {
+          const data = await res.json();
+          setProviders(data);
+        }
       } catch (err) {
         console.error("Error fetching providers:", err);
       }
     };
     fetchProviders();
+    const interval = setInterval(fetchProviders, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const [inquiries, setInquiries] = useState<any[]>([]);
@@ -2169,13 +2172,38 @@ const AdminDashboard = ({
       if (!adminId) return;
       try {
         const generatedSpId = 'SP-' + Math.floor(10000 + Math.random() * 90000);
-        await updateDoc(doc(db, 'users', provider.id), {
+        
+        const res = await fetch('/api/sp-applications', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: provider.id,
+            status: 'Confirmed',
+            isVerified: true,
+            verifiedBy: adminId,
+            spId: generatedSpId
+          })
+        });
+
+        if (!res.ok) throw new Error("Failed to verify provider");
+        
+        // Add to Firebase users collection so they can login
+        await addDoc(collection(db, 'users'), {
+          role: 'provider',
+          name: provider.name,
+          phone: provider.phone,
+          address: provider.address,
+          education: provider.education,
           isVerified: true,
           status: 'Confirmed',
           verifiedBy: adminId,
           spId: generatedSpId,
+          createdAt: serverTimestamp(),
           verifiedAt: serverTimestamp()
         });
+
+        // Optimistically update UI
+        setProviders(prev => prev.map(p => p.id === provider.id ? { ...p, status: 'Confirmed', isVerified: true, verifiedBy: adminId, spId: generatedSpId } : p));
         
         // Log to Google Sheets via Netlify Form for now, or just to adminNotifications
         const formData = new URLSearchParams();
@@ -2202,11 +2230,21 @@ const AdminDashboard = ({
       const confirmReject = window.confirm("Are you sure you want to reject this application?");
       if (!confirmReject) return;
       try {
-        await updateDoc(doc(db, 'users', provider.id), {
-          status: 'Rejected',
-          isVerified: false,
-          rejectedAt: serverTimestamp()
+        const res = await fetch('/api/sp-applications', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: provider.id,
+            status: 'Rejected',
+            isVerified: false
+          })
         });
+
+        if (!res.ok) throw new Error("Failed to reject provider");
+
+        // Optimistically update UI
+        setProviders(prev => prev.map(p => p.id === provider.id ? { ...p, status: 'Rejected', isVerified: false } : p));
+        
         alert("Application Rejected.");
       } catch (err) {
         console.error("Error rejecting SP:", err);
@@ -3816,16 +3854,29 @@ const ProviderRegistrationModal = ({ isOpen, onClose }: any) => {
   const handleRegister = async () => {
     if (!form.name || !form.phone) return alert("Please provide at least Name and Phone Number");
     try {
-      await addDoc(collection(db, 'users'), {
-        role: 'provider',
-        name: form.name,
-        phone: form.phone,
-        address: form.address,
-        education: form.education,
-        isVerified: false,
-        status: 'Pending Review',
-        createdAt: serverTimestamp()
+      // 1. Save SP application to Netlify Database
+      const res = await fetch('/api/sp-applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          phone: form.phone,
+          address: form.address,
+          education: form.education
+        })
       });
+      
+      if (!res.ok) throw new Error("Failed to submit application");
+
+      // 2. Notify Admin and Master Admin via Firebase notification log
+      await addDoc(collection(db, 'adminNotifications'), {
+        type: 'SP_APPLICATION_SUBMITTED',
+        message: `New Service Provider Application submitted by ${form.name}.`,
+        adminId: 'system',
+        details: `Phone: ${form.phone}`,
+        timestamp: Date.now()
+      });
+      
       setStep(2);
     } catch(e) {
       console.error(e);
