@@ -570,22 +570,14 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
       return (window as any).recaptchaVerifier;
     }
 
-    // Set language as requested
-    auth.languageCode = 'it';
     // To apply the default browser preference instead of explicitly setting it.
     auth.useDeviceLanguage();
 
     const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      'size': 'normal',
+      'size': 'invisible',
       'callback': (response: any) => {
         // reCAPTCHA solved, allow signInWithPhoneNumber.
         console.log('reCAPTCHA solved', response);
-        // If we needed to get the response explicitly as requested:
-        // const recaptchaResponse = grecaptcha.getResponse(recaptchaWidgetId);
-        if (typeof (window as any).grecaptcha !== 'undefined' && (window as any).recaptchaWidgetId !== undefined) {
-           const recaptchaResponse = (window as any).grecaptcha.getResponse((window as any).recaptchaWidgetId);
-           console.log('Recaptcha response:', recaptchaResponse);
-        }
       },
       'expired-callback': () => {
         // Response expired. Ask user to solve reCAPTCHA again.
