@@ -244,7 +244,7 @@ const SectionHeading = ({ sub, title, desc, centered = false }: any) => (
   <div className={`mb-16 ${centered ? 'text-center mx-auto' : ''} max-w-3xl`}>
     {sub && <p className="text-primary font-bold uppercase tracking-[0.3em] text-xs mb-4">{sub}</p>}
     <h2 className="text-4xl md:text-6xl mb-6">{title}</h2>
-    {desc && <p className="text-white/50 text-lg font-light leading-relaxed">{desc}</p>}
+    {desc && <p className="text-white/70 text-lg font-light leading-relaxed">{desc}</p>}
   </div>
 );
 
@@ -301,13 +301,13 @@ const SOSButton = ({ user }: { user: any }) => {
             initial={{ opacity: 0, y: 20, scale: 0.8 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.8 }}
-            className="glass-card p-6 rounded-[2rem] mb-4 w-80 text-center border-red-500/20 shadow-[0_0_50px_rgba(239,68,68,0.2)]"
+            className="glass-card p-6 rounded-[2rem] mb-4 w-80 text-center border-[#FF0000]/20 shadow-[0_0_50px_rgba(255,0,0,0.2)]"
           >
-            <div className="w-14 h-14 bg-red-600/20 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-600/20">
+            <div className="w-14 h-14 bg-[#FF0000]/20 text-[#FF0000] rounded-full flex items-center justify-center mx-auto mb-4 border border-[#FF0000]/20">
               <AlertTriangle className="animate-pulse w-7 h-7" />
             </div>
             <h3 className="text-xl font-black uppercase tracking-tight mb-1 text-white">Emergency Center</h3>
-            <p className="text-[10px] text-white/40 uppercase tracking-[0.2em] mb-6 font-bold">Standard Response Protocol Active</p>
+            <p className="text-[10px] text-white/60 uppercase tracking-[0.2em] mb-6 font-bold">Standard Response Protocol Active</p>
             
             <div className="space-y-4">
               <div className="space-y-2">
@@ -316,16 +316,16 @@ const SOSButton = ({ user }: { user: any }) => {
                   onClick={() => handleSOSAlert('CARE_POLICE')}
                   className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-red-500/10 hover:border-red-500/50 transition-all flex items-center justify-center gap-3 group"
                 >
-                   <ShieldCheck className={`w-4 h-4 ${isLogging ? 'animate-spin' : 'text-white/20 group-hover:text-red-500'}`} />
-                   <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">{isLogging ? 'Transmitting...' : 'Notify Care Police'}</span>
+                   <ShieldCheck className={`w-4 h-4 ${isLogging ? 'animate-spin' : 'text-white/40 group-hover:text-red-500'}`} />
+                   <span className="text-[10px] font-bold uppercase tracking-widest text-white/80">{isLogging ? 'Transmitting...' : 'Notify Care Police'}</span>
                 </button>
                 <button 
                   disabled={isLogging}
                   onClick={() => handleSOSAlert('AIR_AMBULANCE')}
                   className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-blue-500/10 hover:border-blue-500/50 transition-all flex items-center justify-center gap-3 group"
                 >
-                   <Ambulance className={`w-4 h-4 ${isLogging ? 'animate-spin' : 'text-white/20 group-hover:text-blue-500'}`} />
-                   <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">{isLogging ? 'Transmitting...' : 'Call Air Ambulance'}</span>
+                   <Ambulance className={`w-4 h-4 ${isLogging ? 'animate-spin' : 'text-white/40 group-hover:text-blue-500'}`} />
+                   <span className="text-[10px] font-bold uppercase tracking-widest text-white/80">{isLogging ? 'Transmitting...' : 'Call Air Ambulance'}</span>
                 </button>
                 
                 {contact && !isEditing && (
@@ -344,7 +344,7 @@ const SOSButton = ({ user }: { user: any }) => {
               <div className="pt-6 border-t border-white/5">
                 {isEditing ? (
                   <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-white/30 text-left mb-2">Emergency Contact #</p>
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-white/50 text-left mb-2">Emergency Contact #</p>
                     <input 
                       type="tel"
                       value={tempContact}
@@ -354,7 +354,7 @@ const SOSButton = ({ user }: { user: any }) => {
                     />
                     <div className="flex gap-2">
                       <button onClick={handleSaveContact} className="flex-1 py-3 bg-primary text-surface rounded-xl text-[10px] font-black uppercase tracking-widest">Establish</button>
-                      <button onClick={() => setIsEditing(false)} className="flex-1 py-3 bg-white/5 text-white/40 rounded-xl text-[10px] font-bold uppercase">Cancel</button>
+                      <button onClick={() => setIsEditing(false)} className="flex-1 py-3 bg-white/5 text-white/60 rounded-xl text-[10px] font-bold uppercase">Cancel</button>
                     </div>
                   </div>
                 ) : (
@@ -364,7 +364,7 @@ const SOSButton = ({ user }: { user: any }) => {
                         setTempContact(contact);
                         setIsEditing(true);
                       }}
-                      className="text-[10px] uppercase font-bold text-primary/60 hover:text-primary flex items-center justify-center gap-2 transition-colors"
+                      className="text-[10px] uppercase font-bold text-primary/80 hover:text-primary flex items-center justify-center gap-2 transition-colors"
                     >
                       {contact ? <Settings className="w-3 h-3" /> : <User className="w-3 h-3" />}
                       <span>{contact ? 'Modify Protocol Contact' : 'Register Emergency Contact'}</span>
@@ -379,7 +379,7 @@ const SOSButton = ({ user }: { user: any }) => {
 
               <button 
                 onClick={() => setActive(false)}
-                className="text-white/20 text-[9px] uppercase font-black tracking-widest mt-4 hover:text-white transition-all flex items-center justify-center gap-2 mx-auto"
+                className="text-white/40 text-[9px] uppercase font-black tracking-widest mt-4 hover:text-white transition-all flex items-center justify-center gap-2 mx-auto"
               >
                 <X className="w-3 h-3" /> Deactivate SOS
               </button>
@@ -390,9 +390,9 @@ const SOSButton = ({ user }: { user: any }) => {
       
       <button 
         onClick={() => setActive(!active)}
-        className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-700 shadow-2xl relative group ${active ? 'bg-white rotate-180' : 'bg-red-600 hover:bg-red-700 hover:scale-110'}`}
+        className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-700 shadow-[0_0_40px_rgba(255,0,0,0.4)] relative group ${active ? 'bg-white rotate-180' : 'bg-[#FF0000] hover:bg-[#CC0000] hover:scale-110'}`}
       >
-        <div className={`absolute inset-0 rounded-full animate-ping bg-red-600 opacity-20 group-hover:opacity-40 ${active ? 'hidden' : ''}`} />
+        <div className={`absolute inset-0 rounded-full animate-ping bg-[#FF0000] opacity-30 group-hover:opacity-50 ${active ? 'hidden' : ''}`} />
         {active ? <X className="text-surface w-6 h-6" /> : <AlertTriangle className="text-white w-7 h-7" />}
       </button>
     </div>
@@ -420,7 +420,7 @@ const PaymentModal = ({ isOpen, onClose, planName, onPaymentComplete }: any) => 
               <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-1">Premium Activation</p>
               <h3 className="text-xl font-bold">{planName} Pack</h3>
            </div>
-           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X className="w-5 h-5 text-white/40" /></button>
+           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X className="w-5 h-5 text-white/60" /></button>
         </div>
 
         <div className="p-8 text-center space-y-6">
@@ -438,7 +438,7 @@ const PaymentModal = ({ isOpen, onClose, planName, onPaymentComplete }: any) => 
            </div>
            <div>
               <p className="text-sm font-bold text-white mb-2">Scan QR to Complete Transaction</p>
-              <p className="text-[10px] text-white/40 uppercase tracking-widest leading-relaxed">
+              <p className="text-[10px] text-white/60 uppercase tracking-widest leading-relaxed">
                 Please mention your <span className="text-primary">Registered Mobile Number</span> in the transaction remarks for instant activation.
               </p>
            </div>
@@ -484,12 +484,12 @@ const WalletModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void
               <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-1">Financial Portal</p>
               <h3 className="text-xl font-bold">CARVIA Wallet</h3>
            </div>
-           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X className="w-5 h-5 text-white/40" /></button>
+           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X className="w-5 h-5 text-white/60" /></button>
         </div>
 
         <div className="p-8 text-center space-y-6">
            <div className="p-6 bg-white/5 rounded-3xl border border-white/10 mb-6">
-              <p className="text-[10px] uppercase font-bold text-white/30 tracking-widest mb-1">Current Balance</p>
+              <p className="text-[10px] uppercase font-bold text-white/50 tracking-widest mb-1">Current Balance</p>
               <p className="text-4xl font-black text-white italic tracking-tighter">₹0.00</p>
            </div>
 
@@ -507,7 +507,7 @@ const WalletModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void
 
            <div>
               <p className="text-sm font-bold text-white mb-2">Scan QR to Add Credits</p>
-              <p className="text-[10px] text-white/40 uppercase tracking-widest leading-relaxed">
+              <p className="text-[10px] text-white/60 uppercase tracking-widest leading-relaxed">
                 Add funds instantly to your CARVIA Wallet for any transaction. 
                 <br />Funds will reflect after <span className="text-emerald-500">System Verification</span>.
               </p>
@@ -791,6 +791,26 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
     }
   };
 
+  const handleSPLogin = async () => {
+    try {
+      const spIdVal = email.trim();
+      if (!spIdVal) throw new Error("Please enter SP ID NO");
+      const q = query(collection(db, 'users'), where('spId', '==', spIdVal));
+      const snap = await getDocs(q);
+      if (snap.empty) {
+        throw new Error("Invalid SP ID NO");
+      }
+      const provider = snap.docs[0].data();
+      if (!provider.isVerified) {
+        throw new Error("Your application is pending or rejected.");
+      }
+      onProviderLogin();
+      onClose();
+    } catch(err: any) {
+      setError(err.message);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -808,30 +828,56 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
       >
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold uppercase tracking-tight">
-            {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : 'Admin Hub'}
+            {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : mode === 'sp' ? 'Provider Access' : 'Admin Hub'}
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-            <X className="w-5 h-5 text-white/50" />
+            <X className="w-5 h-5 text-white/70" />
           </button>
         </div>
 
-        <div className="flex gap-4 mb-6">
-          <button 
-            onClick={() => setMethod('mobile')}
-            className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest border-b-2 transition-all ${method === 'mobile' ? 'border-primary text-primary' : 'border-white/10 text-white/40'}`}
-          >
-            Mobile
-          </button>
-          <button 
-            onClick={() => setMethod('email')}
-            className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest border-b-2 transition-all ${method === 'email' ? 'border-primary text-primary' : 'border-white/10 text-white/40'}`}
-          >
-            Email
-          </button>
-        </div>
+        {mode !== 'sp' && (
+          <div className="flex gap-4 mb-6">
+            <button 
+              onClick={() => setMethod('mobile')}
+              className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest border-b-2 transition-all ${method === 'mobile' ? 'border-primary text-primary' : 'border-white/10 text-white/60'}`}
+            >
+              Mobile
+            </button>
+            <button 
+              onClick={() => setMethod('email')}
+              className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest border-b-2 transition-all ${method === 'email' ? 'border-primary text-primary' : 'border-white/10 text-white/60'}`}
+            >
+              Email
+            </button>
+          </div>
+        )}
 
         <div className="space-y-4">
-          {method === 'mobile' ? (
+          {mode === 'sp' ? (
+            <div className="space-y-4">
+               <div>
+                 <label className="label-bold mb-2 block">SP ID NO</label>
+                 <div className="flex gap-2">
+                   <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/70"><ShieldCheck className="w-4 h-4"/></div>
+                   <input 
+                     type="text" 
+                     value={email}
+                     onChange={(e) => setEmail(e.target.value)}
+                     className="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors font-mono tracking-wider" 
+                     placeholder="SP-XXXXX" 
+                   />
+                 </div>
+               </div>
+               {error && (
+                 <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest flex items-center gap-2">
+                   <AlertTriangle className="w-3 h-3" /> {error}
+                 </p>
+               )}
+               <Button variant="primary" className="w-full" onClick={handleSPLogin}>
+                 Login as Provider
+               </Button>
+            </div>
+          ) : method === 'mobile' ? (
             <div className="space-y-4">
                {mode === 'signup' && (
                  <div>
@@ -842,7 +888,7 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
                <div>
                  <label className="label-bold mb-2 block">Phone Number</label>
                  <div className="flex gap-2">
-                   <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/50">+91</div>
+                   <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/70">+91</div>
                    <input 
                      id="auth-tel" 
                      type="tel" 
@@ -889,7 +935,7 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
                          <AlertTriangle className="w-3 h-3" /> {error}
                        </motion.p>
                      )}
-                     <p className="text-[9px] text-white/20 mt-2 uppercase font-bold italic tracking-wider">Verification required via Secure SMS</p>
+                     <p className="text-[9px] text-white/40 mt-2 uppercase font-bold italic tracking-wider">Verification required via Secure SMS</p>
                    </div>
                  </motion.div>
                )}
@@ -909,7 +955,7 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
                <div>
                  <label className="label-bold mb-2 block">Email Address</label>
                  <div className="flex gap-2">
-                   <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/50"><Mail className="w-4 h-4"/></div>
+                   <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/70"><Mail className="w-4 h-4"/></div>
                    <input 
                      type="email" 
                      value={email}
@@ -948,7 +994,7 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
                          <AlertTriangle className="w-3 h-3" /> {error}
                        </motion.p>
                      )}
-                     <p className="text-[9px] text-white/20 mt-2 uppercase font-bold italic tracking-wider">Verification sent to your email.</p>
+                     <p className="text-[9px] text-white/40 mt-2 uppercase font-bold italic tracking-wider">Verification sent to your email.</p>
                    </div>
                  </motion.div>
                )}
@@ -964,7 +1010,7 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
             <div className="w-full border-t border-white/10"></div>
           </div>
           <div className="relative flex justify-center text-xs">
-            <span className="bg-surface px-2 text-white/40 uppercase tracking-widest font-bold">Or continue with</span>
+            <span className="bg-surface px-2 text-white/60 uppercase tracking-widest font-bold">Or continue with</span>
           </div>
         </div>
         <button 
@@ -978,11 +1024,11 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
 
         <div className="mt-8 pt-6 border-t border-white/5 text-center flex flex-col gap-3">
           {mode === 'login' ? (
-            <p className="text-sm text-white/40">
+            <p className="text-sm text-white/60">
               New to CAREVIA? <button onClick={() => setMode('signup')} className="text-primary font-bold hover:underline">Create Account</button>
             </p>
           ) : (
-            <p className="text-sm text-white/40">
+            <p className="text-sm text-white/60">
               Already have an account? <button onClick={() => setMode('login')} className="text-primary font-bold hover:underline">Sign In</button>
             </p>
           )}
@@ -992,16 +1038,15 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
                  onClose();
                  onOpenAdmin();
                }}
-               className="text-[10px] uppercase tracking-widest font-bold text-white/20 hover:text-white transition-colors"
+               className="text-[10px] uppercase tracking-widest font-bold text-white/40 hover:text-white transition-colors"
              >
                Admin Entrance
              </button>
              <div className="w-px h-4 bg-white/10" />
              <button 
                onClick={() => {
-                 // Open Provider Login specific view or just handle via same form
-                 setMode('login');
-                 setError('Hint: For SP Login, use phone starting with 99 and OTP 123456');
+                 setMode('sp');
+                 setMethod('sp_id');
                }}
                className="text-[10px] uppercase tracking-widest font-bold text-primary opacity-60 hover:opacity-100 transition-all underline decoration-primary/30 underline-offset-4"
              >
@@ -1070,10 +1115,10 @@ const SubscriptionPlans = ({ onUpgrade }: any) => {
             </div>
             <div className="flex items-baseline gap-2 mb-6">
               <span className="text-4xl font-bold text-primary">₹{plan.price}</span>
-              <span className="text-sm text-white/30 line-through">₹{plan.oldPrice}</span>
+              <span className="text-sm text-white/50 line-through">₹{plan.oldPrice}</span>
             </div>
             <div className="mt-auto space-y-4">
-              <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-white/40">
+              <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-white/60">
                 <span>Validity</span>
                 <span>{plan.period}</span>
               </div>
@@ -1087,7 +1132,7 @@ const SubscriptionPlans = ({ onUpgrade }: any) => {
               >
                 Select Plan
               </Button>
-              <p className="text-[10px] text-center text-white/30 italic">Autopay enabled</p>
+              <p className="text-[10px] text-center text-white/50 italic">Autopay enabled</p>
             </div>
           </motion.div>
         ))}
@@ -1101,12 +1146,12 @@ const SubscriptionPlans = ({ onUpgrade }: any) => {
           {benefits.map((benefit, i) => (
             <div key={i} className="flex items-start gap-3">
               <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-              <span className="text-sm text-white/70">{benefit}</span>
+              <span className="text-sm text-white/90">{benefit}</span>
             </div>
           ))}
         </div>
       </div>
-      <p className="text-center text-xs text-white/30 italic mt-6 px-4 py-3 bg-white/5 rounded-2xl border border-white/5">
+      <p className="text-center text-xs text-white/50 italic mt-6 px-4 py-3 bg-white/5 rounded-2xl border border-white/5">
         * Please note: Final prices may differ according to your specific requirements, case complexity, and physical service location.
       </p>
     </section>
@@ -1135,7 +1180,7 @@ const HowToUse = () => {
                {s.icon}
             </div>
             <h4 className="text-sm font-bold uppercase tracking-widest mb-3">{i + 1}. {s.title}</h4>
-            <p className="text-xs text-white/40 leading-relaxed px-4">{s.desc}</p>
+            <p className="text-xs text-white/60 leading-relaxed px-4">{s.desc}</p>
           </div>
         ))}
       </div>
@@ -1154,7 +1199,7 @@ const AboutSection = () => (
            desc="CAREVIA is a trusted care management service. We help families find the best caregivers for their loved ones."
          />
          <div className="space-y-6">
-            <p className="text-sm text-white/60 leading-loose">We act as the bridge between caregivers and families. Our focus is on privacy and quality. Whether it's elderly care or child care, we handle everything so you don't have to worry.</p>
+            <p className="text-sm text-white/80 leading-loose">We act as the bridge between caregivers and families. Our focus is on privacy and quality. Whether it's elderly care or child care, we handle everything so you don't have to worry.</p>
             <div className="grid sm:grid-cols-2 gap-4">
                {[
                  { t: '10-Step Vetting', d: 'Rigorous vetting for every provider.' },
@@ -1164,7 +1209,7 @@ const AboutSection = () => (
                ].map((item, i) => (
                  <div key={i} className="p-4 bg-white/5 rounded-2xl border border-white/5">
                     <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">{item.t}</p>
-                    <p className="text-[10px] text-white/30">{item.d}</p>
+                    <p className="text-[10px] text-white/50">{item.d}</p>
                  </div>
                ))}
             </div>
@@ -1179,7 +1224,7 @@ const AboutSection = () => (
          <div className="absolute inset-0 flex items-center justify-center p-12">
             <div className="text-center">
                <p className="text-4xl font-black mb-4">"Care is not just a service; it's a commitment."</p>
-               <p className="text-primary/50 text-[10px] uppercase font-bold tracking-[0.4em]">Ashvin Galav // Founder</p>
+               <p className="text-primary/70 text-[10px] uppercase font-bold tracking-[0.4em]">Ashvin Galav // Founder</p>
             </div>
          </div>
       </div>
@@ -1404,20 +1449,20 @@ const AIBotChat = ({ isOpen, onClose, isPremium, sessionId, onLog }: any) => {
                 <h3 className="text-sm font-bold uppercase tracking-widest text-primary">Elite Assistant</h3>
                 <div className="flex items-center gap-1.5">
                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                   <span className="text-[10px] text-white/40 uppercase font-black tracking-widest">Active Member Hub</span>
+                   <span className="text-[10px] text-white/60 uppercase font-black tracking-widest">Active Member Hub</span>
                 </div>
              </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/50"><X /></button>
+          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/70"><X /></button>
         </div>
 
         {!isPremium ? (
           <div className="flex-1 p-10 flex flex-col items-center justify-center text-center bg-black/40">
-             <div className="w-20 h-20 border border-white/10 rounded-3xl flex items-center justify-center mb-6 text-white/20">
+             <div className="w-20 h-20 border border-white/10 rounded-3xl flex items-center justify-center mb-6 text-white/40">
                 <Lock className="w-10 h-10" />
              </div>
              <h4 className="text-xl font-bold mb-3 uppercase tracking-tight">Access Restricted</h4>
-             <p className="text-sm text-white/40 mb-8 leading-relaxed">
+             <p className="text-sm text-white/60 mb-8 leading-relaxed">
                The Private AI Concierge is an exclusive benefit for <span className="text-primary font-bold italic">Premium Subscribers.</span>
              </p>
              <Button variant="primary" className="w-full text-[10px] py-4" onClick={() => {
@@ -1432,7 +1477,7 @@ const AIBotChat = ({ isOpen, onClose, isPremium, sessionId, onLog }: any) => {
             <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-black/20">
                {messages.map((m, i) => (
                  <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                   <div className={`max-w-[85%] p-4 rounded-2xl text-sm ${m.role === 'user' ? 'bg-primary/20 border border-primary/20 text-white rounded-br-none' : 'bg-white/5 border border-white/10 text-white/70 rounded-bl-none'}`}>
+                   <div className={`max-w-[85%] p-4 rounded-2xl text-sm ${m.role === 'user' ? 'bg-primary/20 border border-primary/20 text-white rounded-br-none' : 'bg-white/5 border border-white/10 text-white/90 rounded-bl-none'}`}>
                      {m.text}
                    </div>
                  </div>
@@ -1482,7 +1527,7 @@ const ServiceCatalog = ({ activeTab, setActiveTab, onBook, userLocation, setUser
             <SectionHeading 
               title="specialized services for every life"
             />
-            <p className="text-xs text-white/40 uppercase tracking-widest mt-4 max-w-xl leading-relaxed">
+            <p className="text-xs text-white/60 uppercase tracking-widest mt-4 max-w-xl leading-relaxed">
               {activeCategory?.description}
             </p>
           </div>
@@ -1490,7 +1535,7 @@ const ServiceCatalog = ({ activeTab, setActiveTab, onBook, userLocation, setUser
           <div className="flex items-center gap-4 bg-white/5 p-4 rounded-3xl border border-white/10 w-full md:w-auto self-start">
               <MapPin className="text-primary w-5 h-5 flex-shrink-0" />
               <div className="flex flex-col">
-                 <span className="text-[8px] font-bold text-white/30 uppercase tracking-[0.2em]">Location</span>
+                 <span className="text-[8px] font-bold text-white/50 uppercase tracking-[0.2em]">Location</span>
                  <select
                    value={userLocation}
                    onChange={(e) => setUserLocation(e.target.value)}
@@ -1507,7 +1552,7 @@ const ServiceCatalog = ({ activeTab, setActiveTab, onBook, userLocation, setUser
             <button 
               key={cat.id}
               onClick={() => setActiveTab(cat.id)}
-              className={`flex-shrink-0 snap-start flex items-center gap-3 px-6 py-4 rounded-2xl transition-all ${activeTab === cat.id ? 'bg-primary text-surface font-black shadow-[0_0_20px_rgba(212,175,55,0.3)]' : 'bg-white/10 text-white/80 hover:bg-white/20'}`}
+              className={`flex-shrink-0 snap-start flex items-center gap-3 px-6 py-4 rounded-2xl transition-all ${activeTab === cat.id ? 'bg-primary text-surface font-black shadow-[0_0_20px_rgba(212,175,55,0.3)]' : 'bg-white/10 text-white hover:bg-white/20'}`}
             >
               {cat.icon}
               <span className="uppercase tracking-widest text-xs font-bold">{cat.name}</span>
@@ -1524,7 +1569,7 @@ const ServiceCatalog = ({ activeTab, setActiveTab, onBook, userLocation, setUser
                  <ul className="space-y-4">
                    {section.items.map((item, i) => (
                      <li key={i} className="flex items-center justify-between group">
-                       <div className="flex items-center gap-3 text-sm text-white/60 group-hover:text-white transition-colors">
+                       <div className="flex items-center gap-3 text-sm text-white/80 group-hover:text-white transition-colors">
                          <div className="w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_8px_rgba(45,212,191,0.5)]" />
                          {item}
                        </div>
@@ -1546,12 +1591,12 @@ const ServiceCatalog = ({ activeTab, setActiveTab, onBook, userLocation, setUser
                      {activeCategory?.pricing?.map((p: any, i: number) => (
                        <div key={i} className="p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-primary/20 transition-all">
                           <div className="flex justify-between items-center mb-2">
-                             <span className="text-[10px] font-black uppercase tracking-widest text-white/80">{p.tier}</span>
+                             <span className="text-[10px] font-black uppercase tracking-widest text-white">{p.tier}</span>
                              <span className="text-[11px] font-bold text-primary">{p.price}</span>
                           </div>
                           <div className="flex flex-wrap gap-2">
                              {p.features.map((f: string, j: number) => (
-                               <span key={j} className="text-[8px] bg-white/5 text-white/40 px-2 py-0.5 rounded tracking-tighter">{f}</span>
+                               <span key={j} className="text-[8px] bg-white/5 text-white/60 px-2 py-0.5 rounded tracking-tighter">{f}</span>
                              ))}
                           </div>
                        </div>
@@ -1577,11 +1622,11 @@ const ServiceCatalog = ({ activeTab, setActiveTab, onBook, userLocation, setUser
                  </div>
                  <div>
                     <h4 className="text-xs font-black uppercase tracking-[0.3em] text-primary">Vetted Professionals</h4>
-                    <p className="text-[10px] text-white/30 uppercase font-bold tracking-widest mt-1">Direct from {userLocation}</p>
+                    <p className="text-[10px] text-white/50 uppercase font-bold tracking-widest mt-1">Direct from {userLocation}</p>
                  </div>
               </div>
               <div className="h-px flex-1 mx-8 bg-white/5 hidden md:block" />
-              <div className="text-[10px] font-black uppercase text-white/20 tracking-widest">
+              <div className="text-[10px] font-black uppercase text-white/40 tracking-widest">
                 {providers.length} Verified Partner{providers.length !== 1 ? 's' : ''} Online
               </div>
            </div>
@@ -1613,13 +1658,13 @@ const ServiceCatalog = ({ activeTab, setActiveTab, onBook, userLocation, setUser
                    <div className="p-8">
                       <div className="mb-6">
                         <h5 className="text-lg font-bold group-hover:text-primary transition-colors">{p.name}</h5>
-                        <p className="text-[10px] text-white/30 italic mt-1 line-clamp-2">{(p as any).bio}</p>
+                        <p className="text-[10px] text-white/50 italic mt-1 line-clamp-2">{(p as any).bio}</p>
                       </div>
 
                       <div className="space-y-4">
                          <div className="flex items-center gap-2">
                            <GraduationCap className="w-3 h-3 text-primary" />
-                           <p className="text-[9px] text-white/50 uppercase tracking-widest font-black">{p.education}</p>
+                           <p className="text-[9px] text-white/70 uppercase tracking-widest font-black">{p.education}</p>
                          </div>
                          <div className="flex flex-wrap gap-2">
                             {(p as any).specialties?.map((s: string, i: number) => (
@@ -1630,8 +1675,8 @@ const ServiceCatalog = ({ activeTab, setActiveTab, onBook, userLocation, setUser
 
                       <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/5">
                          <div className="flex flex-col">
-                           <span className="text-[8px] font-bold text-white/20 uppercase tracking-widest mb-1">Experience</span>
-                           <span className="text-[10px] font-black text-white/60 uppercase">{p.experience}</span>
+                           <span className="text-[8px] font-bold text-white/40 uppercase tracking-widest mb-1">Experience</span>
+                           <span className="text-[10px] font-black text-white/80 uppercase">{p.experience}</span>
                          </div>
                          <Button variant="outline" className="px-5 py-2.5 text-[9px] uppercase tracking-widest border-primary/40 text-primary hover:bg-primary hover:text-surface" onClick={() => onBook(p.name)}>Hire Now</Button>
                       </div>
@@ -1640,10 +1685,10 @@ const ServiceCatalog = ({ activeTab, setActiveTab, onBook, userLocation, setUser
               )) : (
                 <div className="col-span-full py-20 text-center glass-card border-dashed border-white/10 bg-white/[0.01]">
                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <MapPin className="w-8 h-8 text-white/20" />
+                      <MapPin className="w-8 h-8 text-white/40" />
                    </div>
-                   <h5 className="text-white/50 font-bold uppercase tracking-widest mb-2">Expansion in Progress</h5>
-                   <p className="text-xs text-white/20 italic max-w-sm mx-auto">We are currently vetting elite partners in {userLocation} for this category. Check back shortly or explore our AI assistant.</p>
+                   <h5 className="text-white/70 font-bold uppercase tracking-widest mb-2">Expansion in Progress</h5>
+                   <p className="text-xs text-white/40 italic max-w-sm mx-auto">We are currently vetting elite partners in {userLocation} for this category. Check back shortly or explore our AI assistant.</p>
                 </div>
               )}
            </div>
@@ -1663,7 +1708,7 @@ const LegalModal = ({ isOpen, onClose }: any) => {
           <SectionHeading sub="Compliance" title="Legal Terms & Policy" desc="Last Updated: April 2025" />
           <button onClick={onClose} className="p-4 bg-white/5 rounded-full hover:bg-white/10"><X /></button>
         </div>
-        <div className="space-y-8 text-white/60 text-sm leading-loose font-light">
+        <div className="space-y-8 text-white/80 text-sm leading-loose font-light">
           <section>
             <h4 className="text-white font-bold mb-4 uppercase tracking-widest">1. Professional Care Commitment</h4>
             <p>CAREVIA Group acts as a premium concierge management platform. We vetting each service provider with a rigorous 10-step protocol, including background checks, credential verification, and interpersonal skills assessment. However, clinical liability resides with the individual medical professionals or registered agencies.</p>
@@ -1708,15 +1753,15 @@ const ActiveServiceTracker = ({ bookings = [] }: { bookings?: any[] }) => {
       </div>
       <div className="w-full sm:ml-auto flex items-center justify-between sm:justify-end gap-4 bg-surface/50 p-3 rounded-2xl border border-white/5">
          <div className="flex flex-col">
-            <span className="text-[8px] font-bold text-white/30 uppercase tracking-widest">Auth Token</span>
+            <span className="text-[8px] font-bold text-white/50 uppercase tracking-widest">Auth Token</span>
             <span className="text-sm font-mono font-bold text-primary tracking-widest">{activeBooking.otp || '****'}</span>
          </div>
          <div className="w-px h-8 bg-white/10" />
          <div className="flex flex-col">
-            <span className="text-[8px] font-bold text-white/30 uppercase tracking-widest">Status</span>
-            <span className="text-[10px] font-black uppercase text-white/60 tracking-tighter">{activeBooking.status}</span>
+            <span className="text-[8px] font-bold text-white/50 uppercase tracking-widest">Status</span>
+            <span className="text-[10px] font-black uppercase text-white/80 tracking-tighter">{activeBooking.status}</span>
          </div>
-         <Info className="w-4 h-4 text-white/20" />
+         <Info className="w-4 h-4 text-white/40" />
       </div>
     </motion.div>
   );
@@ -1845,7 +1890,7 @@ const ProviderDashboard = ({ providerData, onUpdateProvider, onClose, bookings =
 
                       {!providerData?.isDocsUploaded ? (
                         <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl">
-                           <p className="text-[10px] text-primary/80 uppercase font-black tracking-widest mb-4">Verification Steps</p>
+                           <p className="text-[10px] text-primary uppercase font-black tracking-widest mb-4">Verification Steps</p>
                            <ul className="space-y-3 mb-6">
                               <li className="text-[10px] text-white flex items-center gap-2 opacity-60"><Info className="w-3 h-3" /> Aadhar Card / PAN Card</li>
                               <li className="text-[10px] text-white flex items-center gap-2 opacity-60"><Info className="w-3 h-3" /> Professional Certificate</li>
@@ -1865,7 +1910,7 @@ const ProviderDashboard = ({ providerData, onUpdateProvider, onClose, bookings =
                               <CheckCircle2 className="w-5 h-5" />
                               <span className="text-xs font-black uppercase tracking-widest">Files Synchronized</span>
                            </div>
-                           <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Verification in progress. Usually takes 24-48 hours.</p>
+                           <p className="text-[10px] text-white/60 uppercase tracking-widest font-bold">Verification in progress. Usually takes 24-48 hours.</p>
                         </div>
                       )}
                    </div>
@@ -1976,7 +2021,7 @@ const ProviderDashboard = ({ providerData, onUpdateProvider, onClose, bookings =
              <div className="max-w-4xl space-y-12 animate-in fade-in duration-500">
                 <SectionHeading title="Financial Setup" sub="Bank Details" />
                 <div className="glass-card p-8 border-white/10 space-y-6">
-                   <p className="text-sm text-white/60 leading-relaxed mb-6">Please provide your bank account details for automated payouts. These details are securely verified by our finance team.</p>
+                   <p className="text-sm text-white/80 leading-relaxed mb-6">Please provide your bank account details for automated payouts. These details are securely verified by our finance team.</p>
                    <div className="space-y-4">
                       <input type="text" placeholder="Account Holder Name" className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-xs outline-none focus:border-primary/50 text-white" />
                       <input type="text" placeholder="Bank Name" className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-xs outline-none focus:border-primary/50 text-white" />
@@ -2123,9 +2168,12 @@ const AdminDashboard = ({
       const adminId = prompt("Enter your Admin ID No. to confirm verification:");
       if (!adminId) return;
       try {
+        const generatedSpId = 'SP-' + Math.floor(10000 + Math.random() * 90000);
         await updateDoc(doc(db, 'users', provider.id), {
           isVerified: true,
+          status: 'Confirmed',
           verifiedBy: adminId,
+          spId: generatedSpId,
           verifiedAt: serverTimestamp()
         });
         
@@ -2135,6 +2183,7 @@ const AdminDashboard = ({
         formData.append('providerId', provider.id);
         formData.append('providerPhone', provider.phone || '');
         formData.append('adminId', adminId);
+        formData.append('spId', generatedSpId);
         formData.append('timestamp', new Date().toISOString());
         fetch('/', {
           method: 'POST',
@@ -2142,10 +2191,26 @@ const AdminDashboard = ({
           body: formData.toString()
         }).catch(e => console.error(e));
 
-        alert("Service Provider Verified Successfully.");
+        alert(`Service Provider Verified Successfully.\nGenerated SP ID NO: ${generatedSpId}`);
       } catch (err) {
         console.error("Error verifying SP:", err);
         alert("Failed to verify SP.");
+      }
+    };
+
+    const handleRejectSP = async (provider: any) => {
+      const confirmReject = window.confirm("Are you sure you want to reject this application?");
+      if (!confirmReject) return;
+      try {
+        await updateDoc(doc(db, 'users', provider.id), {
+          status: 'Rejected',
+          isVerified: false,
+          rejectedAt: serverTimestamp()
+        });
+        alert("Application Rejected.");
+      } catch (err) {
+        console.error("Error rejecting SP:", err);
+        alert("Failed to reject application.");
       }
     };
 
@@ -2198,7 +2263,7 @@ const AdminDashboard = ({
               <Lock className="w-8 h-8" />
            </div>
            <h2 className="text-2xl font-bold uppercase tracking-tight mb-2">Admin Command Center</h2>
-           <p className="text-xs text-white/40 uppercase tracking-[0.2em] mb-8 font-bold">Protocol: Secure 2-Step Gate</p>
+           <p className="text-xs text-white/60 uppercase tracking-[0.2em] mb-8 font-bold">Protocol: Secure 2-Step Gate</p>
            
            <div className="space-y-6">
               <div>
@@ -2243,7 +2308,7 @@ const AdminDashboard = ({
         </div>
         <div className="flex items-center gap-4">
            <div className="flex flex-col text-right">
-              <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Active Head</span>
+              <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">Active Head</span>
               <span className="text-xs font-bold text-primary">ID: ADMIN_001</span>
            </div>
            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X /></button>
@@ -2254,49 +2319,49 @@ const AdminDashboard = ({
         <div className="w-64 border-r border-white/5 p-6 flex flex-col gap-2 bg-neutral-900/50">
       <button 
         onClick={() => setActiveTab('overview')}
-        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'overview' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/40'}`}
+        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'overview' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/60'}`}
       >
         <LayoutDashboard className="w-4 h-4" /> Overview
       </button>
       <button 
         onClick={() => setActiveTab('bookings')}
-        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'bookings' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/40'}`}
+        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'bookings' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/60'}`}
       >
         <Calendar className="w-4 h-4" /> Booking Ops {bookings.filter(b => b.status === "ACCEPTED_BY_SP").length > 0 && <span className="ml-auto w-2 h-2 bg-primary rounded-full animate-pulse" />}
       </button>
       <button 
         onClick={() => setActiveTab('intel')}
-        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'intel' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/40'}`}
+        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'intel' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/60'}`}
       >
         <Eye className="w-4 h-4" /> Partner Intel
       </button>
       <button 
         onClick={() => setActiveTab('sp-requests')}
-        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'sp-requests' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/40'}`}
+        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'sp-requests' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/60'}`}
       >
         <BriefcaseMedical className="w-4 h-4" /> SP Requests
       </button>
       <button 
         onClick={() => setActiveTab('data')}
-        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'data' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/40'}`}
+        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'data' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/60'}`}
       >
         <Database className="w-4 h-4" /> Data & Export
       </button>
       <button
         onClick={() => setActiveTab('inquiries')}
-        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'inquiries' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/40'}`}
+        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'inquiries' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/60'}`}
       >
         <MessageSquare className="w-4 h-4" /> AI Inquiries
       </button>
       <button
-        onClick={() => setActiveTab('financials')}        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'financials' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/40'}`}
+        onClick={() => setActiveTab('financials')}        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'financials' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/60'}`}
       >
         <TrendingUp className="w-4 h-4" /> Financials
       </button>
       {isMasterAdmin && (
         <button 
           onClick={() => setActiveTab('bank')}
-          className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'bank' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/40'}`}
+          className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'bank' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/60'}`}
         >
           <BriefcaseMedical className="w-4 h-4" /> Bank Details
         </button>
@@ -2304,25 +2369,25 @@ const AdminDashboard = ({
       {isMasterAdmin && (
         <button 
           onClick={() => setActiveTab('surveillance')}
-          className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'surveillance' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/40'}`}
+          className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'surveillance' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/60'}`}
         >
           <Eye className="w-4 h-4" /> Admin Surveillance
         </button>
       )}
       <button 
         onClick={() => setActiveTab('security')}
-        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'security' ? 'bg-red-500/10 text-red-500' : 'hover:bg-white/5 text-white/40'}`}
+        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'security' ? 'bg-red-500/10 text-red-500' : 'hover:bg-white/5 text-white/60'}`}
       >
         <ShieldAlert className="w-4 h-4" /> Security Protocols
       </button>
 
       <div className="mt-4 pt-4 border-t border-white/5 space-y-2">
-        <p className="text-[8px] font-black text-white/20 uppercase tracking-widest px-3 mb-2">Cloud Synced Tools</p>
+        <p className="text-[8px] font-black text-white/40 uppercase tracking-widest px-3 mb-2">Cloud Synced Tools</p>
         <a 
           href="https://drive.google.com" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="flex items-center gap-3 w-full p-3 hover:bg-white/5 text-white/40 rounded-xl text-xs font-bold uppercase tracking-widest transition-all"
+          className="flex items-center gap-3 w-full p-3 hover:bg-white/5 text-white/60 rounded-xl text-xs font-bold uppercase tracking-widest transition-all"
         >
           <Database className="w-4 h-4 text-amber-500" /> Google Drive
         </a>
@@ -2330,7 +2395,7 @@ const AdminDashboard = ({
           href="https://mail.google.com" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="flex items-center gap-3 w-full p-3 hover:bg-white/5 text-white/40 rounded-xl text-xs font-bold uppercase tracking-widest transition-all"
+          className="flex items-center gap-3 w-full p-3 hover:bg-white/5 text-white/60 rounded-xl text-xs font-bold uppercase tracking-widest transition-all"
         >
           <Mail className="w-4 h-4 text-emerald-500" /> Administrative Gmail
         </a>
@@ -2351,9 +2416,9 @@ const AdminDashboard = ({
                     <Sparkles className="w-4 h-4" />
                   </button>
                 </div>
-                {masterOtp && <p className="text-[7px] text-white/30 uppercase mt-1">Expiring in 300s...</p>}
+                {masterOtp && <p className="text-[7px] text-white/50 uppercase mt-1">Expiring in 300s...</p>}
               </div>
-              <button className="flex items-center gap-3 w-full p-3 hover:bg-white/5 text-white/40 rounded-xl text-xs font-bold uppercase tracking-widest mb-2"><Navigation className="w-4 h-4" /> Server Status</button>
+              <button className="flex items-center gap-3 w-full p-3 hover:bg-white/5 text-white/60 rounded-xl text-xs font-bold uppercase tracking-widest mb-2"><Navigation className="w-4 h-4" /> Server Status</button>
               <button className="flex items-center gap-3 w-full p-3 text-red-500/50 hover:text-red-500 text-xs font-bold uppercase tracking-widest" onClick={onLogout || onClose}><LogOut className="w-4 h-4" /> Exit Panel</button>
            </div>
         </div>
@@ -2362,15 +2427,15 @@ const AdminDashboard = ({
              <div className="animate-in fade-in duration-500">
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-12">
                    <div className="glass-card p-6 border-white/10 text-center">
-                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">Total Users</p>
+                      <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Total Users</p>
                       <p className="text-3xl font-bold">0</p>
                    </div>
                    <div className="glass-card p-6 border-white/10 text-center">
-                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">Active Care</p>
+                      <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">Active Care</p>
                       <p className="text-3xl font-bold">0</p>
                    </div>
                    <div className="glass-card p-6 border-white/10 text-center">
-                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2 text-primary">Revenue</p>
+                      <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2 text-primary">Revenue</p>
                       <p className="text-3xl font-bold">₹0</p>
                    </div>
                    <div className="glass-card p-6 border-red-500/20 text-center bg-red-500/5">
@@ -2395,14 +2460,14 @@ const AdminDashboard = ({
                               <Activity className="w-4 h-4 text-primary" />
                               <div>
                                  <p className="text-xs font-bold">{book.service} accepted by {book.providerName || 'Partner'}</p>
-                                 <p className="text-[10px] text-white/40 uppercase tracking-widest">Awaiting Admin Confirmation</p>
+                                 <p className="text-[10px] text-white/60 uppercase tracking-widest">Awaiting Admin Confirmation</p>
                               </div>
                            </div>
                            <Button variant="primary" className="text-[8px] py-1.5 px-4" onClick={() => setActiveTab('bookings')}>Handle</Button>
                         </div>
                       ))}
                       {bookings.filter((b: any) => b.status === "ACCEPTED_BY_SP").length === 0 && (
-                        <p className="text-[10px] text-center text-white/20 uppercase font-bold py-10">No immediate actions required</p>
+                        <p className="text-[10px] text-center text-white/40 uppercase font-bold py-10">No immediate actions required</p>
                       )}
                    </div>
                 </div>
@@ -2417,22 +2482,22 @@ const AdminDashboard = ({
                        <div key={alert.id} className="p-4 bg-white/5 border border-white/5 rounded-2xl text-left">
                           <div className="flex justify-between items-start mb-2">
                              <span className="text-[8px] font-black text-red-500 uppercase tracking-widest px-2 py-0.5 bg-red-500/10 rounded">SOS: {alert.type}</span>
-                             <span className="text-[8px] font-bold text-white/20 uppercase">
+                             <span className="text-[8px] font-bold text-white/40 uppercase">
                                {alert.createdAt?.seconds ? new Date(alert.createdAt.seconds * 1000).toLocaleString() : 'Just now'}
                              </span>
                           </div>
                           <div className="flex justify-between items-end">
                              <div>
                                 <p className="text-xs font-bold text-red-400">{alert.userEmail}</p>
-                                <p className="text-[8px] text-white/40 uppercase tracking-widest mt-1">UID: {alert.userId}</p>
+                                <p className="text-[8px] text-white/60 uppercase tracking-widest mt-1">UID: {alert.userId}</p>
                              </div>
                              <div className="text-right">
-                                <p className="text-[10px] font-mono text-white/80">{alert.message}</p>
+                                <p className="text-[10px] font-mono text-white">{alert.message}</p>
                              </div>
                           </div>
                        </div>
                      ))}
-                     {sosAlerts.length === 0 && <p className="text-[10px] text-center text-white/20 uppercase py-10 font-black">No SOS Alerts Active</p>}
+                     {sosAlerts.length === 0 && <p className="text-[10px] text-center text-white/40 uppercase py-10 font-black">No SOS Alerts Active</p>}
                   </div>
                 </div>
              </div>
@@ -2444,13 +2509,13 @@ const AdminDashboard = ({
                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     <div>
                       <h3 className="text-xl font-bold uppercase tracking-tight">Booking Operations</h3>
-                      <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">Lifecycle Hub & Command Control</p>
+                      <p className="text-[10px] text-white/60 uppercase tracking-widest mt-1">Lifecycle Hub & Command Control</p>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-4">
                       {/* Search & History Filters */}
                       <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                         <input 
                           type="text" 
                           placeholder="Search bookings..." 
@@ -2465,7 +2530,7 @@ const AdminDashboard = ({
                           <button 
                             key={st}
                             onClick={() => setBookingStatusFilter(st)}
-                            className={`px-3 py-1.5 rounded-lg text-[9px] font-bold transition-all uppercase tracking-widest ${bookingStatusFilter === st ? 'bg-primary text-surface' : 'text-white/40 hover:text-white'}`}
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-bold transition-all uppercase tracking-widest ${bookingStatusFilter === st ? 'bg-primary text-surface' : 'text-white/60 hover:text-white'}`}
                           >
                             {st === 'All' ? 'History' : st.replace('_', ' ')}
                           </button>
@@ -2541,11 +2606,11 @@ const AdminDashboard = ({
                                     <span className={`text-[9px] font-black uppercase tracking-[0.1em] px-2 py-0.5 rounded ${
                                       book.status === 'IN_PROGRESS' ? 'bg-amber-500/10 text-amber-500' : 
                                       book.status === 'CONFIRMED' ? 'bg-emerald-500/10 text-emerald-500' :
-                                      book.status === 'PENDING' ? 'bg-blue-500/10 text-blue-400' : 'bg-white/5 text-white/40'
+                                      book.status === 'PENDING' ? 'bg-blue-500/10 text-blue-400' : 'bg-white/5 text-white/60'
                                     }`}>
                                        {book.status.replace('_', ' ')}
                                     </span>
-                                    <span className="text-xs font-bold text-white/40">#{book.id}</span>
+                                    <span className="text-xs font-bold text-white/60">#{book.id}</span>
                                  </div>
                                  <h4 className="text-lg font-bold flex items-center gap-2">
                                    {book.service}
@@ -2553,7 +2618,7 @@ const AdminDashboard = ({
                                       <div className="text-[8px] font-bold uppercase py-0.5 px-2 bg-white/10 rounded">Details</div>
                                    </div>
                                  </h4>
-                                 <p className="text-xs text-white/60">Partner: <span className="text-white font-bold">{book.providerName || 'N/A'}</span> • Customer: {book.customer}</p>
+                                 <p className="text-xs text-white/80">Partner: <span className="text-white font-bold">{book.providerName || 'N/A'}</span> • Customer: {book.customer}</p>
                               </div>
                            </div>
                            <div className="flex gap-3" onClick={e => e.stopPropagation()}>
@@ -2610,47 +2675,47 @@ const AdminDashboard = ({
                             <div>
                                <div className="flex items-center gap-3 mb-2">
                                   <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] px-3 py-1 bg-primary/10 rounded-full">Booking Manifest</span>
-                                  <span className="text-sm font-bold text-white/30">ID: {detailBooking.id}</span>
+                                  <span className="text-sm font-bold text-white/50">ID: {detailBooking.id}</span>
                                </div>
                                <h3 className="text-3xl font-black uppercase tracking-tight">{detailBooking.service}</h3>
                             </div>
-                            <button onClick={() => setDetailBooking(null)} className="p-2 hover:bg-white/5 rounded-full text-white/40"><X /></button>
+                            <button onClick={() => setDetailBooking(null)} className="p-2 hover:bg-white/5 rounded-full text-white/60"><X /></button>
                          </div>
 
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-6">
                                <div className="p-6 bg-white/5 rounded-2xl border border-white/5">
-                                  <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-4">Customer Intelligence</p>
+                                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-4">Customer Intelligence</p>
                                   <div className="flex items-center gap-4 mb-4">
                                      <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary">
                                         <User className="w-6 h-6" />
                                      </div>
                                      <div>
                                         <p className="text-lg font-bold">{detailBooking.customer}</p>
-                                        <p className="text-[10px] text-white/40 uppercase tracking-widest">{detailBooking.location}</p>
+                                        <p className="text-[10px] text-white/60 uppercase tracking-widest">{detailBooking.location}</p>
                                      </div>
                                   </div>
                                   <div className="space-y-2 pt-2 border-t border-white/5">
                                      <div className="flex justify-between text-[10px]">
-                                        <span className="text-white/30 uppercase font-bold tracking-widest">Protocol</span>
+                                        <span className="text-white/50 uppercase font-bold tracking-widest">Protocol</span>
                                         <span className="font-bold text-primary">ELITE_SERVICE</span>
                                      </div>
                                      <div className="flex justify-between text-[10px]">
-                                        <span className="text-white/30 uppercase font-bold tracking-widest">Priority</span>
+                                        <span className="text-white/50 uppercase font-bold tracking-widest">Priority</span>
                                         <span className="font-bold text-amber-500">HIGH</span>
                                      </div>
                                   </div>
                                </div>
 
                                <div className="p-6 bg-white/5 rounded-2xl border border-white/5">
-                                  <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-4">Partner Dispatch</p>
+                                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-4">Partner Dispatch</p>
                                   <div className="flex items-center gap-4">
                                      <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500">
                                         <ShieldCheck className="w-6 h-6" />
                                      </div>
                                      <div>
                                         <p className="text-lg font-bold">{detailBooking.providerName || 'PENDING ALLOCATION'}</p>
-                                        <p className="text-[10px] text-white/40 uppercase tracking-widest">Certified Specialist</p>
+                                        <p className="text-[10px] text-white/60 uppercase tracking-widest">Certified Specialist</p>
                                      </div>
                                   </div>
                                </div>
@@ -2658,15 +2723,15 @@ const AdminDashboard = ({
 
                             <div className="space-y-6">
                                <div className="p-6 bg-white/5 rounded-2xl border border-white/5 h-full">
-                                  <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-4">Deployment Log</p>
+                                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-4">Deployment Log</p>
                                   <div className="space-y-4">
                                      <div className="flex gap-4">
                                         <div className="w-px h-full bg-white/10 relative">
                                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-primary" />
                                         </div>
                                         <div>
-                                           <p className="text-[10px] font-bold text-white/60">REQUEST_INITIATED</p>
-                                           <p className="text-[8px] text-white/20 uppercase">System Timestamp: 23-04-2026</p>
+                                           <p className="text-[10px] font-bold text-white/80">REQUEST_INITIATED</p>
+                                           <p className="text-[8px] text-white/40 uppercase">System Timestamp: 23-04-2026</p>
                                         </div>
                                      </div>
                                      {detailBooking.status !== 'PENDING' && (
@@ -2675,17 +2740,17 @@ const AdminDashboard = ({
                                              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-emerald-500" />
                                           </div>
                                           <div>
-                                             <p className="text-[10px] font-bold text-white/60 uppercase">Partner_Matched</p>
-                                             <p className="text-[8px] text-white/20 uppercase">Allocation Locked</p>
+                                             <p className="text-[10px] font-bold text-white/80 uppercase">Partner_Matched</p>
+                                             <p className="text-[8px] text-white/40 uppercase">Allocation Locked</p>
                                           </div>
                                        </div>
                                      )}
                                      <div className="pt-4 mt-4 border-t border-white/5">
-                                        <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-2">Live Lifecycle</p>
+                                        <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Live Lifecycle</p>
                                         <div className={`p-4 rounded-xl border text-center ${
                                           detailBooking.status === 'IN_PROGRESS' ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' :
                                           detailBooking.status === 'CONFIRMED' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' :
-                                          'bg-white/5 border-white/10 text-white/40'
+                                          'bg-white/5 border-white/10 text-white/60'
                                         }`}>
                                            <p className="text-[10px] font-black uppercase tracking-[0.2em]">{detailBooking.status.replace('_', ' ')}</p>
                                         </div>
@@ -2727,7 +2792,7 @@ const AdminDashboard = ({
                    <h3 className="text-xl font-bold uppercase tracking-tight text-primary flex items-center gap-3">
                      <Eye className="w-6 h-6" /> Admin Surveillance
                    </h3>
-                   <p className="text-[10px] uppercase font-bold text-white/40 tracking-widest mt-1">Live monitoring of all admin activities</p>
+                   <p className="text-[10px] uppercase font-bold text-white/60 tracking-widest mt-1">Live monitoring of all admin activities</p>
                  </div>
                 </div>
                 <div className="glass-card p-6">
@@ -2741,7 +2806,7 @@ const AdminDashboard = ({
                             </div>
                             <div>
                               <p className="text-sm font-bold text-white">{act.action}</p>
-                              <p className="text-[10px] text-white/50 uppercase tracking-widest">{act.admin || 'Unknown Admin'} • {act.time}</p>
+                              <p className="text-[10px] text-white/70 uppercase tracking-widest">{act.admin || 'Unknown Admin'} • {act.time}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-4">
@@ -2758,8 +2823,8 @@ const AdminDashboard = ({
                       ))
                     ) : (
                       <div className="text-center p-12 bg-white/5 border border-white/5 rounded-3xl">
-                         <EyeOff className="w-12 h-12 mx-auto text-white/20 mb-4" />
-                         <p className="text-white/40 uppercase text-xs font-bold tracking-widest">No Admin Activities Recorded</p>
+                         <EyeOff className="w-12 h-12 mx-auto text-white/40 mb-4" />
+                         <p className="text-white/60 uppercase text-xs font-bold tracking-widest">No Admin Activities Recorded</p>
                       </div>
                     )}
                   </div>
@@ -2771,7 +2836,7 @@ const AdminDashboard = ({
                 <div className="flex items-center justify-between">
                    <div>
                       <h3 className="text-2xl font-black uppercase tracking-tight text-red-500">Security Protocols</h3>
-                      <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">Master Admin Oversight Panel</p>
+                      <p className="text-[10px] text-white/60 uppercase tracking-widest mt-1">Master Admin Oversight Panel</p>
                    </div>
                    <div className="px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3">
                       <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
@@ -2783,7 +2848,7 @@ const AdminDashboard = ({
                     <div className="glass-card p-8 border-red-500/20 bg-red-500/5">
                        <ShieldAlert className="w-8 h-8 text-red-500 mb-4" />
                        <h4 className="text-sm font-bold uppercase tracking-widest mb-2">Generate Master Bypass</h4>
-                       <p className="text-[10px] text-white/40 leading-relaxed mb-6">Generates a high-security temporary OTP for emergency system access or manual overrides.</p>
+                       <p className="text-[10px] text-white/60 leading-relaxed mb-6">Generates a high-security temporary OTP for emergency system access or manual overrides.</p>
                        <button 
                          onClick={generateSystemOtp}
                          className="w-full py-4 bg-red-500 text-surface text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-red-600 transition-all font-mono"
@@ -2794,7 +2859,7 @@ const AdminDashboard = ({
                     <div className="glass-card p-8 border-amber-500/20 bg-amber-500/5">
                        <Zap className="w-8 h-8 text-amber-500 mb-4" />
                        <h4 className="text-sm font-bold uppercase tracking-widest mb-2">Website Risk Parameter</h4>
-                       <p className="text-[10px] text-white/40 leading-relaxed mb-6">Current threat level: LOW. All regional nodes are operating within normal latency parameters.</p>
+                       <p className="text-[10px] text-white/60 leading-relaxed mb-6">Current threat level: LOW. All regional nodes are operating within normal latency parameters.</p>
                        <div className="flex items-center gap-4">
                           <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Auto-Mitigation:</span>
                           <div className="flex-1 bg-white/10 h-2 rounded-full overflow-hidden">
@@ -2808,12 +2873,12 @@ const AdminDashboard = ({
                 <div className="glass-card p-0 overflow-hidden border-red-500/10">
                    <div className="bg-white/5 p-4 flex justify-between items-center border-b border-white/5">
                       <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Unauthorized Login Intercepts</p>
-                      <p className="text-[8px] font-bold text-white/20 uppercase">Source: Network Gatekeeper</p>
+                      <p className="text-[8px] font-bold text-white/40 uppercase">Source: Network Gatekeeper</p>
                    </div>
                    <div className="overflow-x-auto">
                       <table className="w-full text-left">
                          <thead className="bg-white/[0.02] border-b border-white/5">
-                            <tr className="text-[8px] font-black text-white/40 uppercase tracking-widest">
+                            <tr className="text-[8px] font-black text-white/60 uppercase tracking-widest">
                                <th className="px-6 py-4">Timestamp</th>
                                <th className="px-6 py-4">Auth ID</th>
                                <th className="px-6 py-4">Target Number</th>
@@ -2825,11 +2890,11 @@ const AdminDashboard = ({
                          <tbody className="divide-y divide-white/5">
                             {securityAlerts.map((alert) => (
                                <tr key={alert.id} className="hover:bg-white/[0.01] transition-colors group">
-                                  <td className="px-6 py-4 text-[10px] font-bold text-white/40">{alert.date}</td>
+                                  <td className="px-6 py-4 text-[10px] font-bold text-white/60">{alert.date}</td>
                                   <td className="px-6 py-4 text-[10px] font-mono font-bold text-primary">{alert.detailId}</td>
-                                  <td className="px-6 py-4 text-[10px] font-bold text-white/80">{alert.number}</td>
+                                  <td className="px-6 py-4 text-[10px] font-bold text-white">{alert.number}</td>
                                   <td className="px-6 py-4 text-[10px] font-mono text-amber-500">{alert.otp}</td>
-                                  <td className="px-6 py-4 text-[10px] font-mono text-white/40">{alert.pass}</td>
+                                  <td className="px-6 py-4 text-[10px] font-mono text-white/60">{alert.pass}</td>
                                   <td className="px-6 py-4 text-right">
                                      <span className="text-[8px] font-black uppercase px-2 py-0.5 rounded bg-red-500/10 text-red-500 border border-red-500/20 tracking-widest">
                                         {alert.status}
@@ -2849,7 +2914,7 @@ const AdminDashboard = ({
                <div className="flex items-center justify-between mb-8">
                  <div>
                    <h3 className="text-2xl font-bold uppercase tracking-tight">AI Generated Inquiries</h3>
-                   <p className="text-xs text-white/40 uppercase tracking-widest mt-1">Customer questions handled by AI Agent</p>
+                   <p className="text-xs text-white/60 uppercase tracking-widest mt-1">Customer questions handled by AI Agent</p>
                  </div>
                  <button 
                    onClick={() => {
@@ -2864,12 +2929,12 @@ const AdminDashboard = ({
 
                <div className="glass-card border-white/5 overflow-hidden">
                  {inquiriesLoading && inquiries.length === 0 ? (
-                   <div className="p-12 text-center text-white/40 flex flex-col items-center gap-4">
+                   <div className="p-12 text-center text-white/60 flex flex-col items-center gap-4">
                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
                      <p className="text-xs font-bold uppercase tracking-widest">Loading Inquiries...</p>
                    </div>
                  ) : inquiries.length === 0 ? (
-                   <div className="p-12 text-center text-white/40">
+                   <div className="p-12 text-center text-white/60">
                      <p className="text-xs font-bold uppercase tracking-widest">No inquiries found.</p>
                    </div>
                  ) : (
@@ -2878,18 +2943,18 @@ const AdminDashboard = ({
                        <div key={inq.id} className="p-6 hover:bg-white/5 transition-colors">
                          <div className="flex justify-between items-start mb-4">
                            <div>
-                             <p className="text-sm font-bold">{inq.name} <span className="text-white/40 text-xs ml-2">{inq.email || inq.phone}</span></p>
+                             <p className="text-sm font-bold">{inq.name} <span className="text-white/60 text-xs ml-2">{inq.email || inq.phone}</span></p>
                              <p className="text-[10px] font-bold text-primary uppercase tracking-widest mt-1">{inq.category}</p>
                            </div>
                            <div className="flex items-center gap-4">
-                             <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{new Date(inq.timestamp).toLocaleString()}</span>
+                             <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">{new Date(inq.timestamp).toLocaleString()}</span>
                              <button onClick={() => handleDeleteInquiry(inq.id)} className="text-red-500 hover:text-red-400 text-xs font-bold uppercase tracking-widest transition-colors"><Trash2 className="w-3 h-3" /></button>
                            </div>
                          </div>
                          <div className="space-y-4">
                            <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-                             <p className="text-xs font-bold text-white/40 uppercase tracking-widest mb-2 flex items-center gap-2"><User className="w-3 h-3" /> Customer Query</p>
-                             <p className="text-sm text-white/80 leading-relaxed">{inq.query}</p>
+                             <p className="text-xs font-bold text-white/60 uppercase tracking-widest mb-2 flex items-center gap-2"><User className="w-3 h-3" /> Customer Query</p>
+                             <p className="text-sm text-white leading-relaxed">{inq.query}</p>
                            </div>
                            <div className="bg-primary/5 p-4 rounded-xl border border-primary/20">
                              <p className="text-xs font-bold text-primary uppercase tracking-widest mb-2 flex items-center gap-2"><Bot className="w-3 h-3" /> AI Agent Response</p>
@@ -2909,7 +2974,7 @@ const AdminDashboard = ({
                <div className="flex items-center justify-between mb-8">
                  <div>
                    <h3 className="text-2xl font-bold uppercase tracking-tight">AI Financial Controller</h3>
-                   <p className="text-xs text-white/40 uppercase tracking-widest mt-1">Autonomous Transaction Management</p>
+                   <p className="text-xs text-white/60 uppercase tracking-widest mt-1">Autonomous Transaction Management</p>
                  </div>
                  <div className="bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 rounded-xl flex items-center gap-3">
                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
@@ -2921,10 +2986,10 @@ const AdminDashboard = ({
                  <div className="glass-card p-8 border-primary/20 bg-primary/5">
                    <Bot className="w-8 h-8 text-primary mb-4" />
                    <h4 className="text-xs font-bold uppercase tracking-widest mb-2">AI Bookkeeper</h4>
-                   <p className="text-[10px] text-white/40 leading-relaxed mb-6">Our integrated AI handles all invoice generation, tax estimation, and provider payouts automatically.</p>
+                   <p className="text-[10px] text-white/60 leading-relaxed mb-6">Our integrated AI handles all invoice generation, tax estimation, and provider payouts automatically.</p>
                    <div className="space-y-3">
                      <div className="flex justify-between text-[8px] font-bold uppercase tracking-widest">
-                       <span className="text-white/20">Efficiency</span>
+                       <span className="text-white/40">Efficiency</span>
                        <span className="text-primary">99.9%</span>
                      </div>
                      <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
@@ -2943,10 +3008,10 @@ const AdminDashboard = ({
                      ].map(txn => (
                        <div key={txn.id} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
                          <div className="flex items-center gap-4">
-                           <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-[10px] font-bold text-white/40">{txn.id.split('-')[1]}</div>
+                           <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-[10px] font-bold text-white/60">{txn.id.split('-')[1]}</div>
                            <div>
                              <p className="text-xs font-bold">{txn.to}</p>
-                             <p className="text-[8px] text-white/30 uppercase tracking-widest">{txn.id}</p>
+                             <p className="text-[8px] text-white/50 uppercase tracking-widest">{txn.id}</p>
                            </div>
                          </div>
                          <div className="text-right">
@@ -2965,7 +3030,7 @@ const AdminDashboard = ({
              <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-5 duration-500">
                 <div className="mb-10">
                    <h3 className="text-2xl font-bold uppercase tracking-tight">System Payout Configuration</h3>
-                   <p className="text-xs text-white/40 uppercase tracking-widest mt-1">Bank details presented to customers for transfers</p>
+                   <p className="text-xs text-white/60 uppercase tracking-widest mt-1">Bank details presented to customers for transfers</p>
                 </div>
 
                 <div className="glass-card p-10 flex flex-col md:flex-row gap-10">
@@ -3018,7 +3083,7 @@ const AdminDashboard = ({
                     </div>
 
                     <div className="w-full md:w-64 flex flex-col items-center justify-center p-6 bg-white/5 rounded-3xl border border-white/5 text-center">
-                       <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-4">Active Payment QR</p>
+                       <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-4">Active Payment QR</p>
                        <div className="bg-white p-3 rounded-2xl mb-4">
                           <img 
                             src="https://photos.fife.usercontent.google.com/pw/AP1GczMC8Fi8dKTsynybVSK6yTGLoVJohAaHD5zOnEX0FVdUcPmO3cSIuliw=w183-h258-no?authuser=0" 
@@ -3027,7 +3092,7 @@ const AdminDashboard = ({
                             referrerPolicy="no-referrer"
                           />
                        </div>
-                       <p className="text-[9px] text-white/20 uppercase font-black tracking-tighter">Protocol: UPI_INTERCEPT_V2</p>
+                       <p className="text-[9px] text-white/40 uppercase font-black tracking-tighter">Protocol: UPI_INTERCEPT_V2</p>
                     </div>
                  </div>
                  
@@ -3037,7 +3102,7 @@ const AdminDashboard = ({
                     </div>
                     <div>
                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Secure Integration</p>
-                       <p className="text-xs text-white/60 leading-relaxed italic">Changes here are verified by the Head Admin and synced across the AI payout network.</p>
+                       <p className="text-xs text-white/80 leading-relaxed italic">Changes here are verified by the Head Admin and synced across the AI payout network.</p>
                     </div>
                  </div>
               </div>
@@ -3047,32 +3112,45 @@ const AdminDashboard = ({
               <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
                  <div className="mb-10">
                    <h3 className="text-2xl font-bold uppercase tracking-tight">Service Provider Requests</h3>
-                   <p className="text-xs text-white/40 uppercase tracking-widest mt-1">Verify new providers and confirm registration.</p>
+                   <p className="text-xs text-white/60 uppercase tracking-widest mt-1">Verify new providers and confirm registration.</p>
                  </div>
                  <div className="grid grid-cols-1 gap-6 pb-20">
                     {providers.map(p => (
-                      <div key={p.id} className="glass-card p-8 border-white/5 flex items-center justify-between">
+                      <div key={p.id} className="glass-card p-8 border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
                          <div>
-                            <h4 className="font-bold">{p.name || 'Anonymous'}</h4>
-                            <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Phone: {p.phone} • ID: {p.id}</p>
-                            <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-1">Bank Details: {p.bankDetails ? `${p.bankDetails.bankName} - ${p.bankDetails.accNumber}` : 'Not Provided'}</p>
+                            <h4 className="font-bold flex items-center gap-2">
+                               {p.name || 'Anonymous'}
+                               {p.status && <span className={`text-[8px] px-2 py-0.5 rounded-full uppercase tracking-widest ${p.status === 'Confirmed' ? 'bg-green-500/20 text-green-500' : p.status === 'Rejected' ? 'bg-red-500/20 text-red-500' : 'bg-amber-500/20 text-amber-500'}`}>{p.status}</span>}
+                            </h4>
+                            <p className="text-[10px] text-white/60 font-bold uppercase tracking-widest">Phone: {p.phone} • DB ID: {p.id}</p>
+                            <p className="text-[10px] text-primary font-bold uppercase tracking-widest mt-1">SP ID NO: {p.spId || 'N/A'} • Education: {p.education || 'N/A'}</p>
                          </div>
-                         <div>
+                         <div className="flex gap-2">
                             {p.isVerified ? (
                                <span className="bg-primary/20 text-primary px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest">Verified by {p.verifiedBy}</span>
+                            ) : p.status === 'Rejected' ? (
+                               <span className="bg-red-500/20 text-red-500 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest">Rejected</span>
                             ) : (
-                               <button 
-                                 onClick={() => handleVerifySP(p)}
-                                 className="bg-primary text-primary-foreground px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-primary/90 transition-colors"
-                               >
-                                 Verify & Confirm
-                               </button>
+                               <>
+                                 <button 
+                                   onClick={() => handleRejectSP(p)}
+                                   className="bg-red-500/10 text-red-500 border border-red-500/30 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-colors"
+                                 >
+                                   Reject
+                                 </button>
+                                 <button 
+                                   onClick={() => handleVerifySP(p)}
+                                   className="bg-primary text-primary-foreground px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-primary/90 transition-colors"
+                                 >
+                                   Verify & Confirm
+                                 </button>
+                               </>
                             )}
                          </div>
                       </div>
                     ))}
                     {providers.length === 0 && (
-                      <p className="text-sm text-white/40">No providers found.</p>
+                      <p className="text-sm text-white/60">No providers found.</p>
                     )}
                  </div>
               </div>
@@ -3083,7 +3161,7 @@ const AdminDashboard = ({
                  <div className="flex justify-between items-center">
                     <div>
                       <h3 className="text-xl font-bold uppercase tracking-tight text-white">Partner Intelligence</h3>
-                      <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">Silent Surveillance & Performance Monitoring</p>
+                      <p className="text-[10px] text-white/60 uppercase tracking-widest mt-1">Silent Surveillance & Performance Monitoring</p>
                     </div>
                     <div className="flex items-center gap-2 bg-red-500/10 px-4 py-2 rounded-full border border-red-500/20">
                        <Eye className="w-4 h-4 text-red-500 animate-pulse" />
@@ -3102,7 +3180,7 @@ const AdminDashboard = ({
                                </div>
                                <div>
                                   <h4 className="font-bold">{p.name}</h4>
-                                  <p className="text-[8px] text-white/30 uppercase font-black tracking-widest">{p.category} • {p.location}</p>
+                                  <p className="text-[8px] text-white/50 uppercase font-black tracking-widest">{p.category} • {p.location}</p>
                                </div>
                             </div>
                             <div className="flex items-center gap-1 bg-white/5 px-2 py-1 rounded-lg">
@@ -3113,14 +3191,14 @@ const AdminDashboard = ({
                          
                          <div className="grid grid-cols-2 gap-4 mb-8">
                             <div className="p-3 bg-white/[0.02] rounded-xl border border-white/5">
-                               <p className="text-[8px] font-black text-white/20 uppercase mb-1">Status</p>
+                               <p className="text-[8px] font-black text-white/40 uppercase mb-1">Status</p>
                                <div className="flex items-center gap-2">
                                   <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
                                   <span className="text-[10px] font-bold uppercase transition-colors group-hover:text-green-500">Online</span>
                                </div>
                             </div>
                             <div className="p-3 bg-white/[0.02] rounded-xl border border-white/5">
-                               <p className="text-[8px] font-black text-white/20 uppercase mb-1">Active jobs</p>
+                               <p className="text-[8px] font-black text-white/40 uppercase mb-1">Active jobs</p>
                                <span className="text-[10px] font-bold uppercase group-hover:text-primary transition-colors">{bookings.filter((b: any) => b.providerName === p.name && b.status === "IN_PROGRESS").length}</span>
                             </div>
                          </div>
@@ -3157,7 +3235,7 @@ const AdminDashboard = ({
                            <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full">Excel Sync</span>
                         </div>
                         <h4 className="text-xl font-bold uppercase tracking-tight">Export Audit Records</h4>
-                        <p className="text-[10px] text-white/40 uppercase tracking-widest mt-2 leading-relaxed">Direct export of all system logs and financial transactions to Google Sheets.</p>
+                        <p className="text-[10px] text-white/60 uppercase tracking-widest mt-2 leading-relaxed">Direct export of all system logs and financial transactions to Google Sheets.</p>
                      </div>
 
                      <div className="flex-1 glass-card p-8 border-primary/20 bg-primary/5 group hover:bg-primary/10 cursor-pointer transition-all" onClick={async () => {
@@ -3174,7 +3252,7 @@ const AdminDashboard = ({
                            <span className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full">Secure Backup</span>
                         </div>
                         <h4 className="text-xl font-bold uppercase tracking-tight">Cloud Snapshot</h4>
-                        <p className="text-[10px] text-white/40 uppercase tracking-widest mt-2 leading-relaxed">Secure JSON encrypted backup of existing system state to your Cloud Drive.</p>
+                        <p className="text-[10px] text-white/60 uppercase tracking-widest mt-2 leading-relaxed">Secure JSON encrypted backup of existing system state to your Cloud Drive.</p>
                      </div>
 
                      <div className="flex-1 glass-card p-8 border-blue-500/20 bg-blue-500/5 group hover:bg-blue-500/10 cursor-pointer transition-all" onClick={async () => {
@@ -3207,7 +3285,7 @@ const AdminDashboard = ({
                            <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest bg-blue-500/10 px-3 py-1 rounded-full">Secure File</span>
                         </div>
                         <h4 className="text-xl font-bold uppercase tracking-tight">Source Code (PDF)</h4>
-                        <p className="text-[10px] text-white/40 uppercase tracking-widest mt-2 leading-relaxed">Download the encrypted project architecture and source files as PDF.</p>
+                        <p className="text-[10px] text-white/60 uppercase tracking-widest mt-2 leading-relaxed">Download the encrypted project architecture and source files as PDF.</p>
                      </div>
 
                      <div className="flex-1 glass-card p-8 border-purple-500/20 bg-purple-500/5 group hover:bg-purple-500/10 cursor-pointer transition-all" onClick={async () => {
@@ -3248,7 +3326,7 @@ const AdminDashboard = ({
                            <span className="text-[10px] font-black text-purple-500 uppercase tracking-widest bg-purple-500/10 px-3 py-1 rounded-full">Google Cloud Sync</span>
                         </div>
                         <h4 className="text-xl font-bold uppercase tracking-tight">Sync & Add</h4>
-                        <p className="text-[10px] text-white/40 uppercase tracking-widest mt-2 leading-relaxed">Direct integration: Syncs system bookings with Google Sheets and backs up to Google Cloud Drive.</p>
+                        <p className="text-[10px] text-white/60 uppercase tracking-widest mt-2 leading-relaxed">Direct integration: Syncs system bookings with Google Sheets and backs up to Google Cloud Drive.</p>
                      </div>
 
                   </div>
@@ -3257,58 +3335,58 @@ const AdminDashboard = ({
                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                         <div>
                            <h4 className="text-xs font-bold uppercase tracking-widest text-primary mb-1">Recent Action History</h4>
-                           <p className="text-[8px] text-white/30 uppercase tracking-widest">Protocol Audit Logs</p>
+                           <p className="text-[8px] text-white/50 uppercase tracking-widest">Protocol Audit Logs</p>
                         </div>
                         <div className="flex flex-wrap items-center gap-4 bg-white/5 p-3 rounded-2xl border border-white/5">
                            <div className="flex items-center gap-2">
-                              <User className="w-3 h-3 text-white/20" />
+                              <User className="w-3 h-3 text-white/40" />
                               <select 
                                 value={filterAdmin}
                                 onChange={(e) => setFilterAdmin(e.target.value)}
-                                className="bg-transparent text-[9px] font-bold text-white/60 outline-none cursor-pointer uppercase tracking-widest"
+                                className="bg-transparent text-[9px] font-bold text-white/80 outline-none cursor-pointer uppercase tracking-widest"
                               >
                                 {admins.map(adm => <option key={adm} value={adm} className="bg-surface">{adm}</option>)}
                               </select>
                            </div>
                            <div className="w-px h-4 bg-white/10 hidden md:block" />
                            <div className="flex items-center gap-2">
-                              <Shield className="w-3 h-3 text-white/20" />
+                              <Shield className="w-3 h-3 text-white/40" />
                               <select 
                                 value={filterType}
                                 onChange={(e) => setFilterType(e.target.value)}
-                                className="bg-transparent text-[9px] font-bold text-white/60 outline-none cursor-pointer uppercase tracking-widest"
+                                className="bg-transparent text-[9px] font-bold text-white/80 outline-none cursor-pointer uppercase tracking-widest"
                               >
                                 {types.map(t => <option key={t} value={t} className="bg-surface">{t}</option>)}
                               </select>
                            </div>
                            <div className="w-px h-4 bg-white/10 hidden md:block" />
                            <div className="flex items-center gap-2 flex-1 min-w-[120px]">
-                              <Search className="w-3 h-3 text-white/20" />
+                              <Search className="w-3 h-3 text-white/40" />
                               <input 
                                 type="text"
                                 placeholder="SEARCH LOGS / SESSIONS..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="bg-transparent text-[9px] font-bold text-white/60 outline-none uppercase tracking-widest w-full"
+                                className="bg-transparent text-[9px] font-bold text-white/80 outline-none uppercase tracking-widest w-full"
                               />
                            </div>
                            <div className="w-px h-4 bg-white/10 hidden md:block" />
                            <div className="flex items-center gap-3">
                               <div className="flex items-center gap-2">
-                                 <Calendar className="w-3 h-3 text-white/20" />
+                                 <Calendar className="w-3 h-3 text-white/40" />
                                  <input 
                                    type="date" 
                                    value={startDate}
                                    onChange={(e) => setStartDate(e.target.value)}
-                                   className="bg-transparent text-[9px] font-bold text-white/60 outline-none cursor-pointer uppercase invert opacity-80"
+                                   className="bg-transparent text-[9px] font-bold text-white/80 outline-none cursor-pointer uppercase invert opacity-80"
                                  />
                               </div>
-                              <span className="text-white/20 text-[9px]">—</span>
+                              <span className="text-white/40 text-[9px]">—</span>
                               <input 
                                 type="date" 
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
-                                className="bg-transparent text-[9px] font-bold text-white/60 outline-none cursor-pointer uppercase invert opacity-80"
+                                className="bg-transparent text-[9px] font-bold text-white/80 outline-none cursor-pointer uppercase invert opacity-80"
                               />
                            </div>
                            <div className="w-px h-4 bg-white/10 hidden md:block" />
@@ -3334,7 +3412,7 @@ const AdminDashboard = ({
                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-[10px] ${
                                   act.type === 'ai' ? 'bg-primary/20 text-primary border border-primary/20' : 
                                   act.type === 'system' ? 'bg-amber-500/20 text-amber-500 border border-amber-500/20' :
-                                  'bg-white/5 text-white/40 border border-white/5'
+                                  'bg-white/5 text-white/60 border border-white/5'
                                 }`}>
                                    {act.type === 'ai' ? <Brain className="w-5 h-5" /> : (act.admin ? act.admin.substring(0, 2).toUpperCase() : '??')}
                                 </div>
@@ -3345,28 +3423,28 @@ const AdminDashboard = ({
                                         <span className={`text-[8px] px-1 rounded border ${
                                           act.status === 'ERROR' ? 'border-red-500/40 text-red-400 bg-red-400/10' :
                                           act.status === 'SUCCESS' ? 'border-emerald-500/40 text-emerald-400 bg-emerald-400/10' :
-                                          'border-primary/40 text-primary/80 bg-primary/10'
+                                          'border-primary/40 text-primary bg-primary/10'
                                         }`}>
                                           {act.status}
                                         </span>
                                       )}
                                    </div>
                                    <div className="flex items-center gap-2 mt-0.5">
-                                      <span className="text-[10px] text-white/30 uppercase tracking-widest">{act.admin}</span>
+                                      <span className="text-[10px] text-white/50 uppercase tracking-widest">{act.admin}</span>
                                       {act.sessionId && (
-                                        <span className="text-[8px] text-primary/40 font-mono tracking-tighter bg-primary/5 px-2 py-0.5 rounded border border-primary/10">ID: {act.sessionId.substring(0, 8)}</span>
+                                        <span className="text-[8px] text-primary/60 font-mono tracking-tighter bg-primary/5 px-2 py-0.5 rounded border border-primary/10">ID: {act.sessionId.substring(0, 8)}</span>
                                       )}
                                    </div>
                                    {act.details && (
-                                      <p className="text-[9px] text-white/40 mt-3 font-mono bg-black/20 p-3 rounded-xl border border-white/5 leading-relaxed max-w-[600px] break-words">
+                                      <p className="text-[9px] text-white/60 mt-3 font-mono bg-black/20 p-3 rounded-xl border border-white/5 leading-relaxed max-w-[600px] break-words">
                                         {act.details}
                                       </p>
                                    )}
                                 </div>
                              </div>
                              <div className="flex flex-col items-end gap-2 text-right">
-                                <span className="block text-[10px] text-white/20 font-mono tracking-tighter">{act.time}</span>
-                                <span className="text-[8px] text-primary/40 uppercase font-black tracking-widest">{act.type?.toUpperCase() || 'LOG'}</span>
+                                <span className="block text-[10px] text-white/40 font-mono tracking-tighter">{act.time}</span>
+                                <span className="text-[8px] text-primary/60 uppercase font-black tracking-widest">{act.type?.toUpperCase() || 'LOG'}</span>
                                 {isMasterAdmin && (
                                    <button 
                                       onClick={() => alert(`Action "${act.action}" has been forcefully stopped/undone by Master Admin.`)}
@@ -3394,7 +3472,7 @@ const AdminDashboard = ({
                           </div>
                         ))}
                      </div>
-                     <div className="flex justify-between mt-4 text-[8px] font-bold text-white/20 uppercase tracking-widest">
+                     <div className="flex justify-between mt-4 text-[8px] font-bold text-white/40 uppercase tracking-widest">
                         <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
                      </div>
                   </div>
@@ -3407,10 +3485,10 @@ const AdminDashboard = ({
                          </div>
                          <div>
                             <h4 className="text-xs font-bold uppercase tracking-widest text-primary">Head Admin Protocol</h4>
-                            <p className="text-[10px] text-white/40 mt-1 uppercase tracking-widest">Data Sharing Control</p>
+                            <p className="text-[10px] text-white/60 mt-1 uppercase tracking-widest">Data Sharing Control</p>
                          </div>
                       </div>
-                      <p className="text-sm text-white/70 mb-8 leading-relaxed">
+                      <p className="text-sm text-white/90 mb-8 leading-relaxed">
                          Establish the global protocol for data extraction and external sharing. Minimal setting restricts all AI-powered data mining.
                       </p>
                       <div className="grid grid-cols-3 gap-3">
@@ -3418,7 +3496,7 @@ const AdminDashboard = ({
                            <button 
                              key={level}
                              onClick={() => setSharingLevel(level)}
-                             className={`py-4 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${sharingLevel === level ? 'bg-primary text-surface border-primary' : 'bg-white/5 border-white/10 text-white/30 hover:bg-white/10'}`}
+                             className={`py-4 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${sharingLevel === level ? 'bg-primary text-surface border-primary' : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'}`}
                            >
                              {level}
                            </button>
@@ -3433,19 +3511,19 @@ const AdminDashboard = ({
                          </div>
                          <div>
                             <h4 className="text-xs font-bold uppercase tracking-widest text-blue-500">Live Data Feed</h4>
-                            <p className="text-[10px] text-white/40 mt-1 uppercase tracking-widest">System Health & API Usage</p>
+                            <p className="text-[10px] text-white/60 mt-1 uppercase tracking-widest">System Health & API Usage</p>
                          </div>
                       </div>
                       <div className="space-y-4">
                          <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-widest">
-                            <span className="text-white/40">API Requests</span>
+                            <span className="text-white/60">API Requests</span>
                             <span className="text-primary">Healthy</span>
                          </div>
                          <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
                             <motion.div initial={{ width: 0 }} animate={{ width: '65%' }} className="bg-primary h-full" />
                          </div>
                          <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-widest">
-                            <span className="text-white/40">Data Encryption</span>
+                            <span className="text-white/60">Data Encryption</span>
                             <span className="text-green-500">AES-256 Active</span>
                          </div>
                          <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
@@ -3459,10 +3537,10 @@ const AdminDashboard = ({
                     <div className="p-8 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
                        <div>
                           <h4 className="text-xs font-bold uppercase tracking-widest text-primary mb-1">Team Data Access Management</h4>
-                          <p className="text-[10px] text-white/30 uppercase tracking-widest">Define granular access levels for administrative staff</p>
+                          <p className="text-[10px] text-white/50 uppercase tracking-widest">Define granular access levels for administrative staff</p>
                        </div>
                        <div className="flex gap-4">
-                          <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Global Override:</span>
+                          <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">Global Override:</span>
                           <button 
                             onClick={() => setTeamAccess(prev => prev === 'Full' ? 'Read-Only' : 'Full')}
                             className={`px-3 py-1 rounded text-[8px] font-black uppercase tracking-tighter ${teamAccess === 'Full' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}
@@ -3474,7 +3552,7 @@ const AdminDashboard = ({
                     <div className="overflow-x-auto">
                        <table className="w-full text-left">
                           <thead>
-                             <tr className="border-b border-white/5 text-[10px] font-bold uppercase tracking-widest text-white/30">
+                             <tr className="border-b border-white/5 text-[10px] font-bold uppercase tracking-widest text-white/50">
                                 <th className="p-6">Member</th>
                                 <th className="p-6">Position</th>
                                 <th className="p-6 text-center">Protocol Level</th>
@@ -3487,12 +3565,12 @@ const AdminDashboard = ({
                                   <td className="p-6">
                                      <div className="flex flex-col">
                                         <span className="text-sm font-bold">{member.name}</span>
-                                        <span className="text-[11px] text-white/30">{member.email}</span>
+                                        <span className="text-[11px] text-white/50">{member.email}</span>
                                      </div>
                                   </td>
-                                  <td className="p-6 text-xs text-white/60 font-medium">{member.role}</td>
+                                  <td className="p-6 text-xs text-white/80 font-medium">{member.role}</td>
                                   <td className="p-6 text-center">
-                                     <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${member.level === 'Full' ? 'bg-primary/20 text-primary' : member.level === 'Standard' ? 'bg-blue-500/20 text-blue-500' : 'bg-white/5 text-white/30'}`}>
+                                     <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${member.level === 'Full' ? 'bg-primary/20 text-primary' : member.level === 'Standard' ? 'bg-blue-500/20 text-blue-500' : 'bg-white/5 text-white/50'}`}>
                                         {member.level}
                                      </span>
                                   </td>
@@ -3516,16 +3594,16 @@ const AdminDashboard = ({
                          <div key={alert.id} className="p-4 bg-white/5 border border-white/5 rounded-2xl text-left">
                             <div className="flex justify-between items-start mb-2">
                                <span className="text-[8px] font-black text-red-500 uppercase tracking-widest px-2 py-0.5 bg-red-500/10 rounded">Unauthorized Attempt</span>
-                               <span className="text-[8px] font-bold text-white/20 uppercase">{alert.date}</span>
+                               <span className="text-[8px] font-bold text-white/40 uppercase">{alert.date}</span>
                             </div>
                             <div className="flex justify-between items-end">
                                <div>
                                   <p className="text-xs font-bold">{alert.number}</p>
-                                  <p className="text-[8px] text-white/40 uppercase tracking-widest mt-1">ID: {alert.detailId}</p>
+                                  <p className="text-[8px] text-white/60 uppercase tracking-widest mt-1">ID: {alert.detailId}</p>
                                </div>
                                <div className="text-right">
-                                  <p className="text-[10px] font-mono text-white/80">OTP: {alert.otp}</p>
-                                  <p className="text-[8px] font-mono text-white/40">PW: {alert.pass}</p>
+                                  <p className="text-[10px] font-mono text-white">OTP: {alert.otp}</p>
+                                  <p className="text-[8px] font-mono text-white/60">PW: {alert.pass}</p>
                                </div>
                             </div>
                          </div>
@@ -3543,16 +3621,16 @@ const AdminDashboard = ({
                          <div key={alert.id} className="p-4 bg-white/5 border border-white/5 rounded-2xl text-left">
                             <div className="flex justify-between items-start mb-2">
                                <span className="text-[8px] font-black text-red-500 uppercase tracking-widest px-2 py-0.5 bg-red-500/10 rounded">Unauthorized Attempt</span>
-                               <span className="text-[8px] font-bold text-white/20 uppercase">{alert.date}</span>
+                               <span className="text-[8px] font-bold text-white/40 uppercase">{alert.date}</span>
                             </div>
                             <div className="flex justify-between items-end">
                                <div>
                                   <p className="text-xs font-bold">{alert.number}</p>
-                                  <p className="text-[8px] text-white/40 uppercase tracking-widest mt-1">ID: {alert.detailId}</p>
+                                  <p className="text-[8px] text-white/60 uppercase tracking-widest mt-1">ID: {alert.detailId}</p>
                                </div>
                                <div className="text-right">
-                                  <p className="text-[10px] font-mono text-white/80">OTP: {alert.otp}</p>
-                                  <p className="text-[8px] font-mono text-white/40">PW: {alert.pass}</p>
+                                  <p className="text-[10px] font-mono text-white">OTP: {alert.otp}</p>
+                                  <p className="text-[8px] font-mono text-white/60">PW: {alert.pass}</p>
                                </div>
                             </div>
                          </div>
@@ -3564,7 +3642,7 @@ const AdminDashboard = ({
 
            <div className="mt-12 glass-card p-8 border-primary/20 bg-primary/5">
               <h4 className="text-xs font-bold uppercase tracking-widest text-primary mb-4">Development Tools</h4>
-              <p className="text-xs text-white/40 mb-6">Access secure logs, update source descriptors, and manage site configurations.</p>
+              <p className="text-xs text-white/60 mb-6">Access secure logs, update source descriptors, and manage site configurations.</p>
               <div className="flex gap-4">
                 <Button variant="outline" className="text-[10px] py-3">View Source Logs</Button>
                 <Button variant="outline" className="text-[10px] py-3">Update Descriptors</Button>
@@ -3589,7 +3667,7 @@ const WalletSection = ({ onManage }: { onManage?: () => void }) => (
       </div>
     </div>
     <div className="text-center sm:text-right w-full sm:w-auto">
-       <p className="text-[10px] uppercase font-bold text-white/30 tracking-widest mb-2">Rewards Active</p>
+       <p className="text-[10px] uppercase font-bold text-white/50 tracking-widest mb-2">Rewards Active</p>
        <Button variant="outline" className="w-full sm:w-auto px-6 py-3 text-[10px] uppercase tracking-widest" onClick={onManage}>Manage Balance</Button>
     </div>
   </div>
@@ -3666,7 +3744,7 @@ const LiveAlarm = ({ bookings, financialAlerts = [], isAdmin, isSP, onAcknowledg
              </p>
           </div>
        </div>
-       <p className="text-[10px] text-white/60 mb-6 font-bold uppercase tracking-widest leading-relaxed">
+       <p className="text-[10px] text-white/80 mb-6 font-bold uppercase tracking-widest leading-relaxed">
           {isFinancial ? currentFinancial.details : (isAdmin ? 'A partner has accepted a contract. Approval required.' : 'New service request detected in your sector.')}
        </p>
        <div className="flex gap-3">
@@ -3702,13 +3780,13 @@ const ReviewsSection = () => {
             <div className="flex gap-1 mb-4 text-primary">
               {[...Array(rev.rating)].map((_, i) => <Star key={i} className="w-3 h-3 fill-current" />)}
             </div>
-            <p className="text-sm text-white/70 italic mb-6 leading-loose">"{rev.text}"</p>
+            <p className="text-sm text-white/90 italic mb-6 leading-loose">"{rev.text}"</p>
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm font-bold">{rev.name}</p>
-                <p className="text-[10px] uppercase font-bold text-primary/60 tracking-widest">{rev.role}</p>
+                <p className="text-[10px] uppercase font-bold text-primary/80 tracking-widest">{rev.role}</p>
               </div>
-              <span className="text-[10px] text-white/20 font-bold">{rev.date}</span>
+              <span className="text-[10px] text-white/40 font-bold">{rev.date}</span>
             </div>
           </div>
         ))}
@@ -3724,6 +3802,7 @@ const ProviderRegistrationModal = ({ isOpen, onClose }: any) => {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     name: '',
+    phone: '',
     address: '',
     education: '',
     aadhaar: null as File | null,
@@ -3734,9 +3813,24 @@ const ProviderRegistrationModal = ({ isOpen, onClose }: any) => {
     setForm(prev => ({ ...prev, [field]: file }));
   };
 
-  const handleRegister = () => {
-    // Simulate registration
-    setStep(2);
+  const handleRegister = async () => {
+    if (!form.name || !form.phone) return alert("Please provide at least Name and Phone Number");
+    try {
+      await addDoc(collection(db, 'users'), {
+        role: 'provider',
+        name: form.name,
+        phone: form.phone,
+        address: form.address,
+        education: form.education,
+        isVerified: false,
+        status: 'Pending Review',
+        createdAt: serverTimestamp()
+      });
+      setStep(2);
+    } catch(e) {
+      console.error(e);
+      alert("Registration failed");
+    }
   };
 
   if (!isOpen) return null;
@@ -3764,7 +3858,7 @@ const ProviderRegistrationModal = ({ isOpen, onClose }: any) => {
                  <h3 className="text-xl font-bold">Join as Service Provider</h3>
               </div>
            </div>
-           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X className="w-5 h-5 text-white/40" /></button>
+           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X className="w-5 h-5 text-white/60" /></button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-8">
@@ -3782,9 +3876,19 @@ const ProviderRegistrationModal = ({ isOpen, onClose }: any) => {
                       />
                    </div>
                    <div>
+                      <label className="label-bold mb-2 block">Phone Number</label>
+                      <input 
+                        type="tel"
+                        value={form.phone}
+                        onChange={(e) => setForm({...form, phone: e.target.value})}
+                        className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors"
+                        placeholder="9999999999"
+                      />
+                   </div>
+                   <div className="md:col-span-2">
                       <label className="label-bold mb-2 block">Educational Qualification</label>
                       <div className="relative">
-                         <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                         <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
                          <input 
                            type="text"
                            value={form.education}
@@ -3817,8 +3921,8 @@ const ProviderRegistrationModal = ({ isOpen, onClose }: any) => {
                           handleFileChange('aadhaar', e.dataTransfer.files[0]);
                         }}
                       >
-                         <Upload className={`w-8 h-8 mx-auto mb-2 ${form.aadhaar ? 'text-primary' : 'text-white/20'}`} />
-                         <p className="text-[10px] text-white/40 uppercase font-black">
+                         <Upload className={`w-8 h-8 mx-auto mb-2 ${form.aadhaar ? 'text-primary' : 'text-white/40'}`} />
+                         <p className="text-[10px] text-white/60 uppercase font-black">
                             {form.aadhaar ? form.aadhaar.name : 'Drop Aadhaar Image or Click'}
                          </p>
                          <input 
@@ -3841,8 +3945,8 @@ const ProviderRegistrationModal = ({ isOpen, onClose }: any) => {
                           handleFileChange('pan', e.dataTransfer.files[0]);
                         }}
                       >
-                         <FileText className={`w-8 h-8 mx-auto mb-2 ${form.pan ? 'text-primary' : 'text-white/20'}`} />
-                         <p className="text-[10px] text-white/40 uppercase font-black">
+                         <FileText className={`w-8 h-8 mx-auto mb-2 ${form.pan ? 'text-primary' : 'text-white/40'}`} />
+                         <p className="text-[10px] text-white/60 uppercase font-black">
                             {form.pan ? form.pan.name : 'Drop PAN Image or Click'}
                          </p>
                          <input 
@@ -3858,7 +3962,7 @@ const ProviderRegistrationModal = ({ isOpen, onClose }: any) => {
 
                 <div className="bg-primary/5 p-4 rounded-xl flex items-start gap-4">
                    <ShieldCheck className="w-5 h-5 text-primary flex-shrink-0" />
-                   <p className="text-[10px] text-white/50 leading-relaxed uppercase font-bold tracking-widest">
+                   <p className="text-[10px] text-white/70 leading-relaxed uppercase font-bold tracking-widest">
                       Your identity documents are used strictly for background verification purposes and encrypted with Tier-1 security protocols.
                    </p>
                 </div>
@@ -3869,16 +3973,16 @@ const ProviderRegistrationModal = ({ isOpen, onClose }: any) => {
                    <ShieldCheck className="w-12 h-12 text-green-500 animate-pulse" />
                 </div>
                 <h4 className="text-2xl font-bold uppercase tracking-tight">Application Received!</h4>
-                <p className="text-sm text-white/50 leading-relaxed max-w-md mx-auto">
+                <p className="text-sm text-white/70 leading-relaxed max-w-md mx-auto">
                    Our vetting team will verify your credentials and documents within <span className="text-primary font-bold">24-48 hours</span>. We will contact you at your registered mobile number for a quick orientation.
                 </p>
                 <div className="grid grid-cols-2 gap-4 max-w-xs mx-auto pt-6">
                    <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-                      <span className="block text-[8px] uppercase font-bold text-white/30 mb-1">Status</span>
+                      <span className="block text-[8px] uppercase font-bold text-white/50 mb-1">Status</span>
                       <span className="text-[10px] font-bold text-primary uppercase">Pending Review</span>
                    </div>
                    <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-                      <span className="block text-[8px] uppercase font-bold text-white/30 mb-1">Vetting ID</span>
+                      <span className="block text-[8px] uppercase font-bold text-white/50 mb-1">Vetting ID</span>
                       <span className="text-[10px] font-bold text-white uppercase">#PV-9201</span>
                    </div>
                 </div>
@@ -3935,7 +4039,7 @@ const BookingModal = ({ isOpen, onClose, serviceName }: any) => {
               <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-1">Service Booking</p>
               <h3 className="text-xl font-bold">{serviceName}</h3>
            </div>
-           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X className="w-5 h-5 text-white/40" /></button>
+           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X className="w-5 h-5 text-white/60" /></button>
         </div>
 
         <div className="p-8 space-y-6">
@@ -3944,7 +4048,7 @@ const BookingModal = ({ isOpen, onClose, serviceName }: any) => {
                 <div>
                    <label className="label-bold mb-3 block">Service Schedule</label>
                    <div className="relative">
-                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
                       <input 
                         type="date"
                         value={date}
@@ -3956,7 +4060,7 @@ const BookingModal = ({ isOpen, onClose, serviceName }: any) => {
                 <div>
                    <label className="label-bold mb-3 block">Service Location</label>
                    <div className="relative">
-                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
                       <input 
                         type="text"
                         value={address}
@@ -3976,17 +4080,17 @@ const BookingModal = ({ isOpen, onClose, serviceName }: any) => {
                    <ShieldCheck className="w-10 h-10 text-primary" />
                 </div>
                 <h4 className="text-2xl font-bold">Booking Confirmed!</h4>
-                <p className="text-sm text-white/50 px-8 leading-relaxed">
+                <p className="text-sm text-white/70 px-8 leading-relaxed">
                    Your request for <span className="text-primary font-bold">{serviceName}</span> is being processed. A dedicated care coordinator will contact you shortly.
                 </p>
                 <div className="p-4 bg-white/5 rounded-2xl text-left border border-white/10">
-                   <p className="text-[10px] uppercase font-bold text-white/30 tracking-widest mb-2">Summary</p>
+                   <p className="text-[10px] uppercase font-bold text-white/50 tracking-widest mb-2">Summary</p>
                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-white/50">Date:</span>
+                      <span className="text-white/70">Date:</span>
                       <span className="font-bold">{date || 'ASAP'}</span>
                    </div>
                    <div className="flex justify-between text-xs">
-                      <span className="text-white/50">Mode:</span>
+                      <span className="text-white/70">Mode:</span>
                       <span className="font-bold">Home Visit</span>
                    </div>
                 </div>
@@ -4042,7 +4146,7 @@ const ProfileModal = ({ isOpen, onClose }: any) => {
              <h2 className="text-2xl font-bold uppercase tracking-tight">User Profile</h2>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-            <X className="w-5 h-5 text-white/50" />
+            <X className="w-5 h-5 text-white/70" />
           </button>
         </div>
 
@@ -4087,7 +4191,7 @@ const ProfileModal = ({ isOpen, onClose }: any) => {
                   <button 
                     key={cat.id}
                     onClick={() => toggleService(cat.id)}
-                    className={`flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all ${profile.preferredServices.includes(cat.id) ? 'bg-primary/20 border-primary text-primary' : 'bg-white/5 border-white/10 text-white/30 hover:bg-white/10'}`}
+                    className={`flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all ${profile.preferredServices.includes(cat.id) ? 'bg-primary/20 border-primary text-primary' : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'}`}
                   >
                     {cat.icon}
                     <span className="text-[10px] uppercase font-bold tracking-widest">{cat.name}</span>
@@ -4141,7 +4245,7 @@ const AuthLandingPage = ({ onEnter, onProviderRegister }: { onEnter: () => void;
              Premium Care. <span className="text-primary">Unlocked.</span>
            </h1>
            
-           <p className="text-lg text-white/40 leading-relaxed max-w-sm">
+           <p className="text-lg text-white/60 leading-relaxed max-w-sm">
              The best care network in India. Please log in to view our caregivers.
            </p>
 
@@ -4153,20 +4257,21 @@ const AuthLandingPage = ({ onEnter, onProviderRegister }: { onEnter: () => void;
                   </div>
                 ))}
               </div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-white/60">Joined by <span className="text-primary">12k+</span> active families</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/80">Joined by <span className="text-primary">12k+</span> active families</p>
            </div>
         </div>
 
         <div className="w-full md:w-[350px] space-y-6">
-           <div className="glass-card p-8 bg-white/[0.02] border-white/10">
-              <h3 className="text-xs font-black uppercase tracking-[0.2em] mb-6 text-center text-primary">Care Elite Entrance</h3>
-              <div className="space-y-4">
-                 <Button variant="primary" className="w-full py-5 uppercase tracking-widest text-xs font-black shadow-[0_0_30px_rgba(20,184,166,0.2)]" onClick={onEnter}>
+           <div className="glass-card p-8 bg-primary/20 border-primary/30 backdrop-blur-xl shadow-[0_0_50px_rgba(85,107,92,0.15)] relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent"></div>
+              <h3 className="relative text-xs font-black uppercase tracking-[0.2em] mb-6 text-center text-primary drop-shadow-sm">Care Elite Entrance</h3>
+              <div className="relative space-y-4">
+                 <Button variant="primary" className="w-full py-5 uppercase tracking-widest text-xs font-black shadow-[0_0_30px_rgba(85,107,92,0.4)]" onClick={onEnter}>
                    Enter Priority Care Portal
                  </Button>
                  <div className="relative">
                     <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/5"></div></div>
-                    <div className="relative flex justify-center text-[8px] uppercase font-black"><span className="bg-surface px-4 text-white/20 tracking-[0.2em]">Partner Network</span></div>
+                    <div className="relative flex justify-center text-[8px] uppercase font-black"><span className="bg-surface px-4 text-white/40 tracking-[0.2em]">Partner Network</span></div>
                  </div>
                  <Button 
                    variant="outline" 
@@ -4176,7 +4281,7 @@ const AuthLandingPage = ({ onEnter, onProviderRegister }: { onEnter: () => void;
                    Join as Healthcare Partner
                  </Button>
               </div>
-              <p className="mt-8 text-center text-[9px] text-white/20 uppercase tracking-widest font-bold">
+              <p className="mt-8 text-center text-[9px] text-white/40 uppercase tracking-widest font-bold">
                 Secured by Google Cloud & CareVia Nexus
               </p>
            </div>
@@ -4520,7 +4625,7 @@ export default function App() {
                 <span className="text-primary">Wellness.</span><br />
                 Compassion.
               </h1>
-              <p className="text-lg text-white/50 mb-12 max-w-lg font-light leading-relaxed">
+              <p className="text-lg text-white/70 mb-12 max-w-lg font-light leading-relaxed">
                 Elite-tier healthcare and assistance management for your loved ones. Experience the future of home-based support.
               </p>
               <div className="flex flex-wrap gap-6">
@@ -4683,25 +4788,25 @@ export default function App() {
                      <Handshake className="w-10 h-10" />
                      <h2 className="text-3xl font-black uppercase tracking-tight">Empower Lives With Us.</h2>
                   </div>
-                  <p className="text-lg text-white/60 leading-relaxed mb-8 font-light">
+                  <p className="text-lg text-white/80 leading-relaxed mb-8 font-light">
                      Are you a specialized care provider? Join the CAREVIA ecosystem to connect with families seeking elite healthcare, child care, and domestic assistance. We offer fair commissions, flexible slots, and a platform built on trust.
                   </p>
                   <div className="grid grid-cols-2 gap-6 mb-10">
                      <div className="flex items-center gap-3">
                         <CheckCircle2 className="text-primary w-5 h-5 flex-shrink-0" />
-                        <span className="text-xs font-bold uppercase tracking-widest text-white/40">Verified Onboarding</span>
+                        <span className="text-xs font-bold uppercase tracking-widest text-white/60">Verified Onboarding</span>
                      </div>
                      <div className="flex items-center gap-3">
                         <CheckCircle2 className="text-primary w-5 h-5 flex-shrink-0" />
-                        <span className="text-xs font-bold uppercase tracking-widest text-white/40">Flexible Schedules</span>
+                        <span className="text-xs font-bold uppercase tracking-widest text-white/60">Flexible Schedules</span>
                      </div>
                      <div className="flex items-center gap-3">
                         <CheckCircle2 className="text-primary w-5 h-5 flex-shrink-0" />
-                        <span className="text-xs font-bold uppercase tracking-widest text-white/40">Direct Payouts</span>
+                        <span className="text-xs font-bold uppercase tracking-widest text-white/60">Direct Payouts</span>
                      </div>
                      <div className="flex items-center gap-3">
                         <CheckCircle2 className="text-primary w-5 h-5 flex-shrink-0" />
-                        <span className="text-xs font-bold uppercase tracking-widest text-white/40">Premium Client Base</span>
+                        <span className="text-xs font-bold uppercase tracking-widest text-white/60">Premium Client Base</span>
                      </div>
                   </div>
                   <Button 
@@ -4716,20 +4821,20 @@ export default function App() {
                   <div className="glass-card p-6 border-white/5 bg-white/[0.02]">
                      <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-4">Required Documents</p>
                      <ul className="space-y-3">
-                        <li className="flex items-center gap-3 text-xs text-white/60">
-                           <FileText className="w-4 h-4 text-white/20" /> Aadhaar Card
+                        <li className="flex items-center gap-3 text-xs text-white/80">
+                           <FileText className="w-4 h-4 text-white/40" /> Aadhaar Card
                         </li>
-                        <li className="flex items-center gap-3 text-xs text-white/60">
-                           <FileText className="w-4 h-4 text-white/20" /> PAN Card
+                        <li className="flex items-center gap-3 text-xs text-white/80">
+                           <FileText className="w-4 h-4 text-white/40" /> PAN Card
                         </li>
-                        <li className="flex items-center gap-3 text-xs text-white/60">
-                           <GraduationCap className="w-4 h-4 text-white/20" /> Academic Certificates
+                        <li className="flex items-center gap-3 text-xs text-white/80">
+                           <GraduationCap className="w-4 h-4 text-white/40" /> Academic Certificates
                         </li>
                      </ul>
                   </div>
                   <div className="glass-card p-6 border-white/5 bg-white/[0.02] text-center">
                      <p className="text-3xl font-bold text-primary mb-1">2.4k+</p>
-                     <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Active Partners</p>
+                     <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Active Partners</p>
                   </div>
                </div>
             </div>
@@ -4835,11 +4940,11 @@ const MobileBottomNav = ({ onAuthClick, onBotClick, isLoggedIn, onProfileClick }
   return (
     <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[150] bg-surface/90 backdrop-blur-xl border-t border-white/5 pb-safe font-sans">
       <div className="flex items-center justify-around p-4">
-        <a href="#home" className="flex flex-col items-center gap-1 text-white/50 hover:text-primary transition-colors">
+        <a href="#home" className="flex flex-col items-center gap-1 text-white/70 hover:text-primary transition-colors">
           <Home className="w-5 h-5" />
           <span className="text-[8px] font-bold uppercase tracking-widest">Home</span>
         </a>
-        <a href="#services" className="flex flex-col items-center gap-1 text-white/50 hover:text-primary transition-colors">
+        <a href="#services" className="flex flex-col items-center gap-1 text-white/70 hover:text-primary transition-colors">
           <Stethoscope className="w-5 h-5" />
           <span className="text-[8px] font-bold uppercase tracking-widest">Services</span>
         </a>
@@ -4849,11 +4954,11 @@ const MobileBottomNav = ({ onAuthClick, onBotClick, isLoggedIn, onProfileClick }
           </div>
           <span className="text-[8px] font-bold uppercase tracking-widest mt-1">AI Concierge</span>
         </button>
-        <a href="#pricing" className="flex flex-col items-center gap-1 text-white/50 hover:text-primary transition-colors">
+        <a href="#pricing" className="flex flex-col items-center gap-1 text-white/70 hover:text-primary transition-colors">
           <Star className="w-5 h-5" />
           <span className="text-[8px] font-bold uppercase tracking-widest">Premium</span>
         </a>
-        <button onClick={isLoggedIn ? onProfileClick : onAuthClick} className="flex flex-col items-center gap-1 text-white/50 hover:text-primary transition-colors">
+        <button onClick={isLoggedIn ? onProfileClick : onAuthClick} className="flex flex-col items-center gap-1 text-white/70 hover:text-primary transition-colors">
           <User className="w-5 h-5" />
           <span className="text-[8px] font-bold uppercase tracking-widest">{isLoggedIn ? 'Profile' : 'Login'}</span>
         </button>
@@ -4914,13 +5019,13 @@ const Navbar = ({ onAuthClick, onBotClick, isPremium, isLoggedIn, onProfileClick
         {/* Search Bar - Desktop */}
         <div className="hidden lg:flex flex-1 max-w-sm mx-12 relative">
           <div className="relative w-full group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-primary transition-colors" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50 group-focus-within:text-primary transition-colors" />
             <input 
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search services..."
-              className="w-full bg-white/5 border border-white/10 px-10 py-3 rounded-2xl text-xs outline-none focus:border-primary/50 focus:bg-white/10 transition-all font-bold tracking-widest placeholder:text-white/20"
+              className="w-full bg-white/5 border border-white/10 px-10 py-3 rounded-2xl text-xs outline-none focus:border-primary/50 focus:bg-white/10 transition-all font-bold tracking-widest placeholder:text-white/40"
             />
             <AnimatePresence>
               {searchResults.length > 0 && (
@@ -4942,8 +5047,8 @@ const Navbar = ({ onAuthClick, onBotClick, isPremium, isLoggedIn, onProfileClick
                       className="w-full text-left p-3 hover:bg-primary/10 rounded-xl transition-all group"
                     >
                       <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-0.5">{res.catName}</p>
-                      <p className="text-xs font-bold text-white/80 group-hover:text-white">{res.item}</p>
-                      <p className="text-[8px] text-white/30 uppercase tracking-widest mt-1">{res.section}</p>
+                      <p className="text-xs font-bold text-white group-hover:text-white">{res.item}</p>
+                      <p className="text-[8px] text-white/50 uppercase tracking-widest mt-1">{res.section}</p>
                     </button>
                   ))}
                 </motion.div>
@@ -4960,7 +5065,7 @@ const Navbar = ({ onAuthClick, onBotClick, isPremium, isLoggedIn, onProfileClick
               <a 
                 key={link.name} 
                 href={link.href} 
-                className="text-[9px] font-bold tracking-[0.2em] uppercase text-white/50 hover:text-primary transition-all"
+                className="text-[9px] font-bold tracking-[0.2em] uppercase text-white/70 hover:text-primary transition-all"
               >
                 {link.name}
               </a>
@@ -4969,7 +5074,7 @@ const Navbar = ({ onAuthClick, onBotClick, isPremium, isLoggedIn, onProfileClick
 
           <button 
             onClick={onBotClick}
-            className={`p-3 rounded-xl border transition-all flex items-center gap-2 group relative ${isPremium ? 'bg-primary/20 border-primary/40 text-primary' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'}`}
+            className={`p-3 rounded-xl border transition-all flex items-center gap-2 group relative ${isPremium ? 'bg-primary/20 border-primary/40 text-primary' : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10'}`}
           >
             <Bot className="w-4 h-4" />
             <span className="text-[9px] uppercase font-bold tracking-widest hidden md:block">Elite AI</span>
@@ -4998,7 +5103,7 @@ const Navbar = ({ onAuthClick, onBotClick, isPremium, isLoggedIn, onProfileClick
           
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="xl:hidden p-3 bg-white/5 rounded-xl text-white/50 hover:text-white transition-all ml-1"
+            className="xl:hidden p-3 bg-white/5 rounded-xl text-white/70 hover:text-white transition-all ml-1"
           >
             {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -5021,7 +5126,7 @@ const Navbar = ({ onAuthClick, onBotClick, isPremium, isLoggedIn, onProfileClick
                     key={link.name} 
                     href={link.href} 
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/60 hover:text-primary transition-all p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-primary/20"
+                    className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/80 hover:text-primary transition-all p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-primary/20"
                   >
                     {link.name}
                   </a>
@@ -5063,14 +5168,14 @@ const Footer = ({ onLegalClick }: any) => {
       <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
         <div className="col-span-2">
            <Logo className="mb-8" />
-           <p className="text-white/30 text-sm font-light leading-loose max-w-sm">
+           <p className="text-white/50 text-sm font-light leading-loose max-w-sm">
              The definitive destination for elite concierge healthcare and domestic management. Discretion, quality, and commitment.
            </p>
         </div>
         
         <div>
            <h5 className="text-[10px] uppercase font-bold tracking-[0.3em] text-primary mb-8">Governance</h5>
-           <ul className="space-y-4 text-xs font-bold text-white/40 uppercase tracking-widest">
+           <ul className="space-y-4 text-xs font-bold text-white/60 uppercase tracking-widest">
              <li><button onClick={onLegalClick} className="hover:text-white transition-colors">Legal Terms</button></li>
              <li><button onClick={onLegalClick} className="hover:text-white transition-colors">Privacy Policy</button></li>
              <li><a href="#" className="hover:text-white transition-colors">User Agreement</a></li>
@@ -5080,12 +5185,12 @@ const Footer = ({ onLegalClick }: any) => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 pt-12 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-6">
-        <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-white/20">
+        <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-white/40">
            <span>© 2025 CAREVIA™</span>
            <span className="w-1 h-1 bg-white/20 rounded-full" />
            <span>Berlin // New York // Dubai</span>
         </div>
-        <div className="flex gap-8 text-[10px] font-bold uppercase tracking-widest text-white/20">
+        <div className="flex gap-8 text-[10px] font-bold uppercase tracking-widest text-white/40">
            <a href="#" className="hover:text-white">Refunds</a>
            <a href="#" className="hover:text-white">SOS Feedback</a>
            <a href="#" className="hover:text-white">Investor Relations</a>

@@ -5,50 +5,79 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Playfair Display", ui-serif, Georgia, serif;
   
-  --color-surface: #151312; /* Deep Espresso */
-  --color-card: #1D1A18; /* Warm Dark Brown */
-  --color-primary: #D4AF37; /* Champagne Gold */
-  --color-primary-container: #2A241D;
-  --color-secondary: #E6D5B8; /* Light Champagne */
-  --color-muted: #A39B93; /* Warm Gray */
-  --color-glass: rgba(29, 26, 24, 0.7);
-  --color-border-glass: rgba(212, 175, 55, 0.15);
-  --color-border-secondary: #332D28;
+  /* Swap white and black for a light premium theme. 'white' becomes dark text/borders, 'black' becomes light backgrounds. */
+  --color-white: #1A211E; 
+  --color-black: #FDFCF8; 
+  
+  --color-surface: #F4F1EA; /* Soft Linen */
+  --color-card: #FFFFFF; /* Pure White for contrast */
+  --color-primary: #556B5C; /* Muted Sage Green */
+  --color-primary-container: #C8D6CD; /* Lighter Sage */
+  --color-secondary: #A67D65; /* Dusty Terracotta */
+  --color-muted: #6B6966; /* Warm Gray */
+  
+  --color-glass: rgba(255, 255, 255, 0.85);
+  --color-border-glass: rgba(117, 143, 125, 0.15);
+  --color-border-secondary: #E6E3DB;
+
+  /* Pastel / Dusty tones for readability on light background */
+  --color-red-400: #C27B7B;
+  --color-red-500: #AD6363;
+  --color-red-600: #964F4F;
+  --color-red-700: #7A3D3D;
+  
+  --color-emerald-400: #73A387;
+  --color-emerald-500: #5B8A6E;
+  --color-emerald-600: #49735A;
+  
+  --color-green-500: #5B8A6E;
+  
+  --color-amber-500: #B88D4D;
+  --color-amber-600: #9E753B;
+  
+  --color-blue-400: #7A9BBD;
+  --color-blue-500: #5E80A3;
+  
+  --color-purple-500: #8A6E9E;
+  
+  --color-neutral-900: #F4F1EA;
+  --color-neutral-200: #E3DFD6;
 }
 
 @layer base {
   body {
-    @apply bg-surface text-[#F0EBE1] font-sans antialiased selection:bg-primary selection:text-surface;
+    @apply bg-surface text-white font-sans antialiased selection:bg-primary selection:text-black;
     background-image: 
-      radial-gradient(circle at 0% 0%, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
-      radial-gradient(circle at 100% 100%, rgba(230, 213, 184, 0.05) 0%, transparent 50%);
+      radial-gradient(circle at 0% 0%, rgba(117, 143, 125, 0.3) 0%, transparent 60%),
+      radial-gradient(circle at 100% 100%, rgba(199, 159, 134, 0.3) 0%, transparent 60%),
+      radial-gradient(circle at 50% 50%, rgba(122, 155, 189, 0.15) 0%, transparent 60%);
     min-height: 100vh;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-serif font-semibold tracking-normal text-[#FDFCFB];
+    @apply font-serif font-semibold tracking-normal text-[#1F2624];
   }
 }
 
 @layer components {
   .glass {
-    @apply bg-card/80 backdrop-blur-[12px] border border-border-glass;
+    @apply bg-card/80 backdrop-blur-[16px] border border-border-glass shadow-[0_8px_32px_rgba(117,143,125,0.06)];
   }
   
   .glass-card {
-    @apply bg-card/60 backdrop-blur-[12px] border border-border-glass p-6 transition-all duration-300 rounded-3xl;
+    @apply bg-card/75 backdrop-blur-[16px] border border-border-glass p-6 transition-all duration-300 rounded-3xl shadow-[0_8px_32px_rgba(117,143,125,0.08)] hover:shadow-[0_12px_48px_rgba(117,143,125,0.12)];
   }
   
   .btn-primary {
-    @apply bg-primary text-surface px-6 py-3 rounded-full font-bold transition-all hover:brightness-110 active:scale-95 text-xs uppercase tracking-widest;
+    @apply bg-primary text-[#FDFCF8] px-6 py-3 rounded-full font-bold transition-all hover:brightness-105 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 text-xs uppercase tracking-widest shadow-[0_4px_16px_rgba(117,143,125,0.3)] hover:shadow-[0_8px_24px_rgba(117,143,125,0.4)];
   }
 
   .btn-outline {
-    @apply border border-border-secondary text-muted px-6 py-3 rounded-full font-semibold transition-all hover:bg-white/5;
+    @apply border border-border-secondary text-muted px-6 py-3 rounded-full font-semibold transition-all hover:bg-white/5 hover:border-primary/30 hover:text-primary;
   }
 
   .btn-gold {
-    @apply bg-primary text-surface px-6 py-3 rounded-full font-bold transition-all hover:brightness-110 active:scale-95;
+    @apply bg-primary text-[#FDFCF8] px-6 py-3 rounded-full font-bold transition-all hover:brightness-105 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 shadow-[0_4px_16px_rgba(117,143,125,0.3)];
   }
 
   .label-bold {
@@ -56,14 +85,17 @@
   }
   
   .sos-button {
-    @apply w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(220,38,38,0.5)] animate-pulse hover:scale-110 transition-transform cursor-pointer z-[100];
+    @apply w-16 h-16 bg-red-500 text-black rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(173,99,99,0.3)] animate-pulse hover:scale-110 transition-transform cursor-pointer z-[100];
   }
 
   .monolith-grid {
     background-image: 
-    linear-gradient(rgba(212, 175, 55, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(212, 175, 55, 0.03) 1px, transparent 1px);
-    background-size: 50px 50px;
+    linear-gradient(rgba(117, 143, 125, 0.25) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(117, 143, 125, 0.25) 1px, transparent 1px),
+    linear-gradient(rgba(117, 143, 125, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(117, 143, 125, 0.08) 1px, transparent 1px);
+    background-size: 50px 50px, 50px 50px, 10px 10px, 10px 10px;
+    background-position: center center;
   }
 
   .hide-scrollbar::-webkit-scrollbar {
