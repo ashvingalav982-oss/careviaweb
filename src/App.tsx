@@ -797,7 +797,7 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
       if (!provider.isVerified) {
         throw new Error("Your application is pending or rejected.");
       }
-      onProviderLogin();
+      onProviderLogin(provider);
       onClose();
     } catch(err: any) {
       setError(err.message);
@@ -1508,9 +1508,25 @@ const AIBotChat = ({ isOpen, onClose, isPremium, sessionId, onLog }: any) => {
   );
 };
 
-const ServiceCatalog = ({ activeTab, setActiveTab, onBook, userLocation, setUserLocation }: { activeTab: string, setActiveTab: (id: string) => void, onBook: (name: string) => void, userLocation: string, setUserLocation: (loc: string) => void }) => {
+const ServiceCatalog = ({ activeTab, setActiveTab, onBook, userLocation, setUserLocation, recommendedKeywords = [] }: { activeTab: string, setActiveTab: (id: string) => void, onBook: (name: string) => void, userLocation: string, setUserLocation: (loc: string) => void, recommendedKeywords?: string[] }) => {
   const providers = MOCK_PROVIDERS.filter(p => p.category === activeTab && p.location === userLocation);
   const activeCategory = CATEGORIES.find(c => c.id === activeTab);
+
+  // Helper function to score items based on keywords
+  const getScore = (item: string) => {
+    let score = 0;
+    const lowerItem = item.toLowerCase();
+    recommendedKeywords.forEach(kw => {
+      if (lowerItem.includes(kw)) score++;
+    });
+    return score;
+  };
+
+  const sortedSections = activeCategory?.sections?.map(section => {
+    const itemsWithScores = section.items.map(item => ({ item, score: getScore(item) }));
+    itemsWithScores.sort((a, b) => b.score - a.score);
+    return { ...section, items: itemsWithScores.map(i => i.item), maxScore: Math.max(...itemsWithScores.map(i => i.score), 0) };
+  }).sort((a, b) => b.maxScore - a.maxScore);
 
   return (
     <section id="services" className="py-24 bg-surface/50 monolith-grid font-sans scroll-mt-24">
@@ -1556,7 +1572,7 @@ const ServiceCatalog = ({ activeTab, setActiveTab, onBook, userLocation, setUser
 
         <div className="glass-card min-h-[400px]">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12">
-             {activeCategory?.sections?.map((section, idx) => (
+             {sortedSections?.map((section, idx) => (
                <div key={idx}>
                  <h5 className="text-primary font-black uppercase tracking-[0.2em] text-[10px] mb-4 pb-2 border-b border-primary/20">{section.name}</h5>
                  <ul className="space-y-4">
@@ -1766,6 +1782,38 @@ const ProviderDashboard = ({ providerData, onUpdateProvider, onClose, bookings =
   const [notification, setNotification] = useState<string | null>(null);
   const [otpInputs, setOtpInputs] = useState<Record<string, string>>({});
 
+  const pendingCount = bookings.filter((b: any) => b.status === 'PENDING_PROCESS' || b.status === 'PENDING').length;
+  const [prevPendingCount, setPrevPendingCount] = useState(pendingCount);
+
+  useEffect(() => {
+    if (pendingCount > prevPendingCount) {
+      setNotification('NEW BOOKING REQUEST RECEIVED');
+      setTimeout(() => setNotification(null), 5000);
+      try {
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        audio.play().catch(() => {});
+      } catch(e) {}
+    }
+    setPrevPendingCount(pendingCount);
+  }, [pendingCount, prevPendingCount]);
+
+  const [preferredCityInput, setPreferredCityInput] = useState('');
+  const [preferredCities, setPreferredCities] = useState<string[]>(providerData?.preferredCities || []);
+
+  const addCity = () => {
+    if (preferredCityInput.trim() && !preferredCities.includes(preferredCityInput.trim().toUpperCase())) {
+      const newCities = [...preferredCities, preferredCityInput.trim().toUpperCase()];
+      setPreferredCities(newCities);
+      onUpdateProvider({ ...providerData, preferredCities: newCities });
+      setPreferredCityInput('');
+    }
+  };
+  const removeCity = (city: string) => {
+    const newCities = preferredCities.filter(c => c !== city);
+    setPreferredCities(newCities);
+    onUpdateProvider({ ...providerData, preferredCities: newCities });
+  };
+
   const handleAction = (bookingId: string, action: 'ACCEPT' | 'DECLINE' | 'START_SERVICE' | 'END_SERVICE') => {
     if (action === 'START_SERVICE' || action === 'END_SERVICE') {
       const book = bookings.find((b: any) => b.id === bookingId);
@@ -1833,7 +1881,7 @@ const ProviderDashboard = ({ providerData, onUpdateProvider, onClose, bookings =
             onClick={() => setActiveTab('bookings')}
             className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'bookings' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-muted'}`}
           >
-            <Calendar className="w-4 h-4" /> Bookings {bookings.filter(b => b.status === "PENDING").length > 0 && <span className="ml-auto w-2 h-2 bg-primary rounded-full animate-pulse" />}
+            <Calendar className="w-4 h-4" /> Bookings {bookings.filter(b => b.status === "PENDING" || b.status === 'PENDING_PROCESS').length > 0 && <span className="ml-auto w-2 h-2 bg-primary rounded-full animate-pulse" />}
           </button>
           <button 
             onClick={() => setActiveTab('earnings')}
@@ -1908,15 +1956,46 @@ const ProviderDashboard = ({ providerData, onUpdateProvider, onClose, bookings =
                       )}
                    </div>
 
-                   <div className="glass-card">
-                      <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-6 text-muted">Field Assignments</h4>
-                      <div className="space-y-4">
-                         {['Elderly Care', 'Nursing', 'Medical Assistant'].map(tag => (
-                           <div key={tag} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
-                              <span className="text-xs font-bold">{tag}</span>
-                              <div className="w-2 h-2 bg-primary rounded-full" />
-                           </div>
-                         ))}
+                   <div className="glass-card flex flex-col gap-6">
+                      <div>
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-6 text-muted">Field Assignments</h4>
+                        <div className="space-y-4">
+                           {['Elderly Care', 'Nursing', 'Medical Assistant'].map(tag => (
+                             <div key={tag} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
+                                <span className="text-xs font-bold">{tag}</span>
+                                <div className="w-2 h-2 bg-primary rounded-full" />
+                             </div>
+                           ))}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-6 text-muted flex items-center gap-2">
+                           <MapPin className="w-3 h-3" /> Preferred Working Cities
+                        </h4>
+                        <div className="flex gap-2 mb-4">
+                           <input 
+                              type="text" 
+                              value={preferredCityInput}
+                              onChange={(e) => setPreferredCityInput(e.target.value)}
+                              placeholder="e.g. MUMBAI" 
+                              className="flex-1 bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-xs outline-none focus:border-primary text-white uppercase"
+                           />
+                           <Button onClick={addCity} variant="primary" className="text-xs px-4">ADD</Button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                           {preferredCities.map(city => (
+                              <div key={city} className="flex items-center gap-2 bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full text-[10px] font-bold text-primary">
+                                 {city}
+                                 <button onClick={() => removeCity(city)} className="hover:text-white transition-colors">
+                                    <X className="w-3 h-3" />
+                                 </button>
+                              </div>
+                           ))}
+                           {preferredCities.length === 0 && (
+                              <span className="text-[10px] text-white/40">No cities added yet.</span>
+                           )}
+                        </div>
                       </div>
                    </div>
                 </div>
@@ -1951,9 +2030,21 @@ const ProviderDashboard = ({ providerData, onUpdateProvider, onClose, bookings =
                               <div className="flex items-center gap-2"><Calendar className="w-3 h-3" /> {book.date}</div>
                               <div className="flex items-center gap-2"><Clock className="w-3 h-3" /> {book.time}</div>
                            </div>
+                           <div className="p-4 bg-white/5 border border-white/10 rounded-xl mt-4 space-y-2">
+                             <div className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                               <Info className="w-3 h-3" /> Requirements & Details
+                             </div>
+                             <p className="text-xs text-white/80">{book.requirements || 'Standard service requirements.'}</p>
+                             {book.address && (
+                               <p className="text-xs text-white/60 mt-2 flex gap-2">
+                                 <LocateFixed className="w-3 h-3 flex-shrink-0 mt-0.5" /> 
+                                 <span className="flex-1">{book.address}</span>
+                               </p>
+                             )}
+                           </div>
                         </div>
 
-                        {book.status === 'PENDING' && (
+                        {(book.status === 'PENDING' || book.status === 'PENDING_PROCESS') && (
                           <div className="flex gap-4 w-full md:w-auto">
                              <Button disabled={isSpectator} variant="outline" className="flex-1 md:w-32 py-4 text-[10px]" onClick={() => handleAction(book.id, 'DECLINE')}>Decline</Button>
                              <Button disabled={isSpectator} variant="primary" className="flex-1 md:w-32 py-4 text-[10px]" onClick={() => handleAction(book.id, 'ACCEPT')}>Accept</Button>
@@ -2010,6 +2101,52 @@ const ProviderDashboard = ({ providerData, onUpdateProvider, onClose, bookings =
              </div>
            )}
 
+           {activeTab === 'earnings' && (
+             <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <SectionHeading title="Revenue & Performance" sub="Earnings Dashboard" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                   <div className="glass-card flex flex-col gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-muted">Total Revenue</span>
+                      <span className="text-3xl font-mono font-bold text-primary">₹45,200</span>
+                      <span className="text-[10px] text-green-500 font-bold uppercase tracking-widest">+12% this month</span>
+                   </div>
+                   <div className="glass-card flex flex-col gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-muted">Completed Services</span>
+                      <span className="text-3xl font-mono font-bold text-white">128</span>
+                      <span className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Lifetime total</span>
+                   </div>
+                   <div className="glass-card flex flex-col gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-muted">Success Rate</span>
+                      <span className="text-3xl font-mono font-bold text-emerald-500">98.5%</span>
+                      <span className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Top tier partner</span>
+                   </div>
+                </div>
+                
+                <div className="glass-card">
+                   <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-6 text-muted">Accepted Bookings Log</h4>
+                   <div className="space-y-4">
+                      {bookings.filter((b: any) => ['ACCEPTED_BY_SP', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED'].includes(b.status)).length === 0 ? (
+                        <p className="text-xs text-white/50 uppercase tracking-widest">No accepted bookings yet.</p>
+                      ) : (
+                        bookings.filter((b: any) => ['ACCEPTED_BY_SP', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED'].includes(b.status)).map((b: any) => (
+                           <div key={b.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
+                              <div className="flex flex-col gap-1">
+                                 <span className="text-xs font-bold uppercase tracking-tight">{b.service}</span>
+                                 <span className="text-[10px] text-white/50">{b.date} • {b.location}</span>
+                              </div>
+                              <div className="flex flex-col items-end gap-1">
+                                 <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                                    {b.status}
+                                 </span>
+                              </div>
+                           </div>
+                        ))
+                      )}
+                   </div>
+                </div>
+             </div>
+           )}
+
            {activeTab === 'bank' && (
              <div className="max-w-4xl space-y-12 animate-in fade-in duration-500">
                 <SectionHeading title="Financial Setup" sub="Bank Details" />
@@ -2052,6 +2189,10 @@ const AdminDashboard = ({
   const [isLocked, setIsLocked] = useState(true);
   const [isMasterAdmin, setIsMasterAdmin] = useState(false);
   const [secretCode, setSecretCode] = useState('');
+  const [loginMode, setLoginMode] = useState<'login'|'register'>('login');
+  const [adminIdInput, setAdminIdInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [step, setStep] = useState(1); // 1: Credentials, 2: OTP
   const [adminNumber, setAdminNumber] = useState('');
   const [pass, setPass] = useState('');
@@ -2275,14 +2416,35 @@ const AdminDashboard = ({
     };
 
     const handleVerify = () => {
-     if (secretCode === 'BIWIJAWANKARU') {
-        setIsLocked(false);
-        setIsMasterAdmin(true);
-     } else if (secretCode === 'ADMIN_CAREVIA' || secretCode === import.meta.env.VITE_ADMIN_SECRET) {
-        setIsLocked(false);
-     } else {
-        alert("Invalid Secret Code");
-     }
+      if (loginMode === 'register') {
+        if (secretCode === 'BIWIJAWANKARU' || secretCode === 'ADMIN_CAREVIA' || secretCode === import.meta.env.VITE_ADMIN_SECRET) {
+          if (!newPassword) return alert("Please enter a password.");
+          const newId = 'ADM-' + Math.floor(1000 + Math.random() * 9000);
+          const admins = JSON.parse(localStorage.getItem('carevia_admins') || '[]');
+          admins.push({ id: newId, password: newPassword, role: secretCode === 'BIWIJAWANKARU' ? 'master' : 'admin' });
+          localStorage.setItem('carevia_admins', JSON.stringify(admins));
+          alert(`Success! Your new Admin ID is ${newId}. Please log in with it.`);
+          setLoginMode('login');
+          setAdminIdInput(newId);
+          setPasswordInput('');
+        } else {
+          alert("Invalid Secret Code for registration");
+        }
+      } else {
+        const admins = JSON.parse(localStorage.getItem('carevia_admins') || '[]');
+        const admin = admins.find((a: any) => a.id === adminIdInput && a.password === passwordInput);
+        if (admin) {
+          setIsLocked(false);
+          setIsMasterAdmin(admin.role === 'master');
+        } else if (secretCode === 'BIWIJAWANKARU') {
+          setIsLocked(false);
+          setIsMasterAdmin(true);
+        } else if (secretCode === 'ADMIN_CAREVIA' || secretCode === import.meta.env.VITE_ADMIN_SECRET) {
+          setIsLocked(false);
+        } else {
+          alert("Invalid Credentials");
+        }
+      }
     };
   const generateSystemOtp = () => {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -2323,23 +2485,75 @@ const AdminDashboard = ({
               <Lock className="w-8 h-8" />
            </div>
            <h2 className="text-2xl font-bold uppercase tracking-tight mb-2">Admin Command Center</h2>
-           <p className="text-xs text-white/60 uppercase tracking-[0.2em] mb-8 font-bold">Protocol: Secure 2-Step Gate</p>
+           <div className="flex gap-2 justify-center mb-6">
+             <button onClick={() => setLoginMode('login')} className={`text-xs uppercase font-bold tracking-widest pb-1 ${loginMode === 'login' ? 'border-b-2 border-primary text-primary' : 'text-white/40'}`}>Login</button>
+             <span className="text-white/20">|</span>
+             <button onClick={() => setLoginMode('register')} className={`text-xs uppercase font-bold tracking-widest pb-1 ${loginMode === 'register' ? 'border-b-2 border-primary text-primary' : 'text-white/40'}`}>Register Admin</button>
+           </div>
            
            <div className="space-y-6">
-              <div>
-                <label className="label-bold mb-2 block text-left text-primary">Master Secret Code</label>
-                <input 
-                  type="password" 
-                  value={secretCode || ''}
-                  onChange={(e) => setSecretCode(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-xl text-center text-sm outline-none focus:border-primary tracking-[0.5em] font-mono" 
-                  placeholder="••••••••••••" 
-                />
-              </div>
+              {loginMode === 'register' ? (
+                <>
+                  <div>
+                    <label className="label-bold mb-2 block text-left text-primary">Master Secret Code</label>
+                    <input 
+                      type="password" 
+                      value={secretCode || ''}
+                      onChange={(e) => setSecretCode(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-xl text-center text-sm outline-none focus:border-primary tracking-[0.5em] font-mono text-white" 
+                      placeholder="••••••••••••" 
+                    />
+                  </div>
+                  <div>
+                    <label className="label-bold mb-2 block text-left text-primary">Create Password</label>
+                    <input 
+                      type="password" 
+                      value={newPassword || ''}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-xl text-center text-sm outline-none focus:border-primary tracking-[0.5em] font-mono text-white" 
+                      placeholder="Password" 
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="label-bold mb-2 block text-left text-primary">Admin ID</label>
+                    <input 
+                      type="text" 
+                      value={adminIdInput || ''}
+                      onChange={(e) => setAdminIdInput(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-xl text-center text-sm outline-none focus:border-primary tracking-[0.2em] font-mono text-white" 
+                      placeholder="ADM-XXXX" 
+                    />
+                  </div>
+                  <div>
+                    <label className="label-bold mb-2 block text-left text-primary">Password</label>
+                    <input 
+                      type="password" 
+                      value={passwordInput || ''}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-xl text-center text-sm outline-none focus:border-primary tracking-[0.5em] font-mono text-white" 
+                      placeholder="••••••••" 
+                    />
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    <p className="text-[10px] text-white/40 uppercase mb-2">Or bypass with Master Code</p>
+                    <input 
+                      type="password" 
+                      value={secretCode || ''}
+                      onChange={(e) => setSecretCode(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-center text-xs outline-none focus:border-primary tracking-[0.2em] font-mono text-white" 
+                      placeholder="Master Code" 
+                    />
+                  </div>
+                </>
+              )}
+
               <div className="flex gap-4">
                 <Button variant="outline" className="flex-1 py-4 text-[10px]" onClick={onClose}>Cancel</Button>
                 <Button variant="primary" className="flex-1 py-4 text-[10px]" onClick={handleVerify}>
-                  Access Secure Hub
+                  {loginMode === 'register' ? 'Generate Admin ID' : 'Access Secure Hub'}
                 </Button>
               </div>
            </div>
@@ -2388,6 +2602,12 @@ const AdminDashboard = ({
         className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'bookings' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/60'}`}
       >
         <Calendar className="w-4 h-4" /> Booking Ops {bookings.filter(b => b.status === "ACCEPTED_BY_SP").length > 0 && <span className="ml-auto w-2 h-2 bg-primary rounded-full animate-pulse" />}
+      </button>
+      <button 
+        onClick={() => setActiveTab('consultation')}
+        className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'consultation' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/60'}`}
+      >
+        <MessageSquare className="w-4 h-4" /> Consultation
       </button>
       <button 
         onClick={() => setActiveTab('intel')}
@@ -2587,14 +2807,14 @@ const AdminDashboard = ({
                         />
                       </div>
                       
-                      <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-1">
-                        {['All', 'PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED'].map(st => (
+                      <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-1 overflow-x-auto hide-scrollbar">
+                        {['All', 'PENDING_PROCESS', 'ACCEPTED_BY_SP', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED'].map(st => (
                           <button 
                             key={st}
                             onClick={() => setBookingStatusFilter(st)}
-                            className={`px-3 py-1.5 rounded-lg text-[9px] font-bold transition-all uppercase tracking-widest ${bookingStatusFilter === st ? 'bg-primary text-surface' : 'text-white/60 hover:text-white'}`}
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-bold transition-all uppercase tracking-widest whitespace-nowrap ${bookingStatusFilter === st ? 'bg-primary text-surface' : 'text-white/60 hover:text-white'}`}
                           >
-                            {st === 'All' ? 'History' : st.replace('_', ' ')}
+                            {st === 'All' ? 'History' : st.replace(/_/g, ' ')}
                           </button>
                         ))}
                       </div>
@@ -2665,12 +2885,13 @@ const AdminDashboard = ({
                               </div>
                               <div>
                                  <div className="flex items-center gap-2 mb-1">
-                                    <span className={`text-[9px] font-black uppercase tracking-[0.1em] px-2 py-0.5 rounded ${
+                                 <span className={`text-[9px] font-black uppercase tracking-[0.1em] px-2 py-0.5 rounded ${
                                       book.status === 'IN_PROGRESS' ? 'bg-amber-500/10 text-amber-500' : 
                                       book.status === 'CONFIRMED' ? 'bg-emerald-500/10 text-emerald-500' :
-                                      book.status === 'PENDING' ? 'bg-blue-500/10 text-blue-400' : 'bg-white/5 text-white/60'
+                                      book.status === 'ACCEPTED_BY_SP' ? 'bg-purple-500/10 text-purple-400' :
+                                      book.status === 'PENDING_PROCESS' ? 'bg-blue-500/10 text-blue-400' : 'bg-white/5 text-white/60'
                                     }`}>
-                                       {book.status.replace('_', ' ')}
+                                       {book.status.replace(/_/g, ' ')}
                                     </span>
                                     <span className="text-xs font-bold text-white/60">#{book.id}</span>
                                  </div>
@@ -2846,6 +3067,23 @@ const AdminDashboard = ({
                 </div>
                 )}
                 </AnimatePresence>
+
+                {activeTab === 'consultation' && (
+                  <div className="space-y-6 animate-in fade-in duration-500">
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-xl font-bold uppercase tracking-tight text-primary flex items-center gap-3">
+                        <MessageSquare className="w-6 h-6" /> Live Consultations
+                      </h3>
+                      <p className="text-[10px] text-white/50 uppercase tracking-widest">Connect with Customers</p>
+                    </div>
+                    <div className="glass-card p-6 min-h-[500px] flex flex-col justify-center items-center text-center">
+                      <MessageSquare className="w-12 h-12 text-white/20 mb-4" />
+                      <h4 className="text-lg font-bold mb-2">No Active Consultations</h4>
+                      <p className="text-sm text-white/50 mb-6">Waiting for customer queries...</p>
+                      <Button variant="outline" className="text-xs" onClick={() => alert('Simulating incoming chat...')}>Simulate Incoming Chat</Button>
+                    </div>
+                  </div>
+                )}
 
                 {activeTab === 'surveillance' && isMasterAdmin && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-500">
@@ -3918,7 +4156,20 @@ const LiveAlarm = ({ bookings, financialAlerts = [], isAdmin, isSP, onAcknowledg
 // --- Main App ---
 
 const ReviewsSection = () => {
-  const reviews: any[] = [];
+  const [reviews, setReviews] = useState<any[]>([
+    { rating: 5, text: "The service was incredible and very fast.", name: "John Doe", role: "Customer", date: "May 2026" },
+    { rating: 4, text: "Very helpful support team.", name: "Jane Smith", role: "Customer", date: "May 2026" }
+  ]);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ name: '', text: '', rating: 5, role: 'Customer' });
+
+  const submitReview = () => {
+    if (reviewForm.name && reviewForm.text) {
+      setReviews([...reviews, { ...reviewForm, date: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) }]);
+      setReviewForm({ name: '', text: '', rating: 5, role: 'Customer' });
+      setIsReviewModalOpen(false);
+    }
+  };
 
   return (
     <section className="py-24 max-w-7xl mx-auto px-6 font-sans">
@@ -3946,8 +4197,67 @@ const ReviewsSection = () => {
         ))}
       </div>
       <div className="mt-12 text-center">
-         <Button variant="outline" className="text-xs">Submit Your Review</Button>
+         <Button variant="outline" className="text-xs" onClick={() => setIsReviewModalOpen(true)}>Submit Your Review</Button>
       </div>
+
+      <AnimatePresence>
+        {isReviewModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="glass-card max-w-md w-full p-8 relative"
+            >
+              <button 
+                onClick={() => setIsReviewModalOpen(false)}
+                className="absolute top-6 right-6 text-white/40 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              
+              <h3 className="text-xl font-bold mb-6">Submit Your Review</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="label-bold mb-2 block">Name</label>
+                  <input 
+                    type="text" 
+                    value={reviewForm.name}
+                    onChange={(e) => setReviewForm({...reviewForm, name: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm outline-none focus:border-primary text-white"
+                    placeholder="Your Name"
+                  />
+                </div>
+                <div>
+                  <label className="label-bold mb-2 block">Rating</label>
+                  <select
+                    value={reviewForm.rating}
+                    onChange={(e) => setReviewForm({...reviewForm, rating: Number(e.target.value)})}
+                    className="w-full bg-[#0a0a0a] border border-white/10 px-4 py-3 rounded-xl text-sm outline-none focus:border-primary text-white"
+                  >
+                    {[5,4,3,2,1].map(r => <option key={r} value={r}>{r} Stars</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="label-bold mb-2 block">Review</label>
+                  <textarea 
+                    rows={4}
+                    value={reviewForm.text}
+                    onChange={(e) => setReviewForm({...reviewForm, text: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm outline-none focus:border-primary resize-none text-white"
+                    placeholder="Write your review here..."
+                  />
+                </div>
+                
+                <Button variant="primary" className="w-full mt-4" onClick={submitReview}>
+                  Submit Review
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };
@@ -4217,12 +4527,23 @@ const ProviderRegistrationModal = ({ isOpen, onClose }: any) => {
   );
 };
 
-const BookingModal = ({ isOpen, onClose, serviceName }: any) => {
+const BookingModal = ({ isOpen, onClose, serviceName, onConfirm }: any) => {
   const [step, setStep] = useState(1);
   const [date, setDate] = useState('');
   const [address, setAddress] = useState('');
+  const [requirements, setRequirements] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
+
+  const handleConfirm = async () => {
+    setIsSubmitting(true);
+    if (onConfirm) {
+      await onConfirm({ serviceName, date, address, requirements });
+    }
+    setIsSubmitting(false);
+    setStep(2);
+  };
 
   return (
     <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 font-sans">
@@ -4256,7 +4577,7 @@ const BookingModal = ({ isOpen, onClose, serviceName }: any) => {
                         type="date"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 px-12 py-4 rounded-xl text-sm focus:border-primary outline-none transition-colors"
+                        className="w-full bg-white/5 border border-white/10 px-12 py-4 rounded-xl text-sm focus:border-primary outline-none transition-colors text-white"
                       />
                    </div>
                 </div>
@@ -4269,22 +4590,32 @@ const BookingModal = ({ isOpen, onClose, serviceName }: any) => {
                         value={address}
                         placeholder="Enter full service address"
                         onChange={(e) => setAddress(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 px-12 py-4 rounded-xl text-sm focus:border-primary outline-none transition-colors"
+                        className="w-full bg-white/5 border border-white/10 px-12 py-4 rounded-xl text-sm focus:border-primary outline-none transition-colors text-white"
                       />
                    </div>
                 </div>
-                <Button variant="primary" className="w-full py-4 uppercase tracking-widest text-xs" onClick={() => setStep(2)}>
-                   Confirm Details
+                <div>
+                   <label className="label-bold mb-3 block">Special Requirements</label>
+                   <textarea 
+                     value={requirements}
+                     onChange={(e) => setRequirements(e.target.value)}
+                     placeholder="Enter any specific requirements for the service provider..."
+                     rows={3}
+                     className="w-full bg-white/5 border border-white/10 px-4 py-4 rounded-xl text-sm focus:border-primary outline-none transition-colors text-white resize-none"
+                   />
+                </div>
+                <Button variant="primary" className="w-full py-4 uppercase tracking-widest text-xs" onClick={handleConfirm} disabled={isSubmitting}>
+                   {isSubmitting ? 'Confirming...' : 'Confirm Details'}
                 </Button>
              </motion.div>
            ) : (
              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6 text-center py-4">
                 <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                   <ShieldCheck className="w-10 h-10 text-primary" />
+                   <Clock className="w-10 h-10 text-amber-500 animate-pulse" />
                 </div>
-                <h4 className="text-2xl font-bold">Booking Confirmed!</h4>
+                <h4 className="text-2xl font-bold">Process Pending</h4>
                 <p className="text-sm text-white/70 px-8 leading-relaxed">
-                   Your request for <span className="text-primary font-bold">{serviceName}</span> is being processed. A dedicated care coordinator will contact you shortly.
+                   Your request for <span className="text-primary font-bold">{serviceName}</span> is <span className="text-amber-500 font-bold uppercase">Pending Process</span>. A dedicated care coordinator is reviewing it.
                 </p>
                 <div className="p-4 bg-white/5 rounded-2xl text-left border border-white/10">
                    <p className="text-[10px] uppercase font-bold text-white/50 tracking-widest mb-2">Summary</p>
@@ -4293,8 +4624,12 @@ const BookingModal = ({ isOpen, onClose, serviceName }: any) => {
                       <span className="font-bold">{date || 'ASAP'}</span>
                    </div>
                    <div className="flex justify-between text-xs">
-                      <span className="text-white/70">Mode:</span>
-                      <span className="font-bold">Home Visit</span>
+                      <span className="text-white/70">Address:</span>
+                      <span className="font-bold">{address || 'Not Provided'}</span>
+                   </div>
+                   <div className="flex justify-between text-xs">
+                      <span className="text-white/70">Status:</span>
+                      <span className="font-bold text-amber-500">PENDING</span>
                    </div>
                 </div>
                 <Button variant="outline" className="w-full py-4" onClick={onClose}>Close Portal</Button>
@@ -4679,33 +5014,73 @@ export default function App() {
     addLog({ action: `Financial Event Intercepted: ${type} - ${details}`, admin: "Finance Bot", time: new Date().toLocaleString(), type: 'financial' });
   };
 
-  const handleProviderAction = (bookingId: string, action: string) => {
-    setActiveBookings(prev => prev.map(b => {
-      if (b.id === bookingId) {
-        if (action === 'ACCEPT') return { ...b, status: 'ACCEPTED_BY_SP' };
-        if (action === 'DECLINE') return { ...b, status: 'DECLINED' };
-        if (action === 'START_SERVICE') return { ...b, status: 'IN_PROGRESS' };
-        if (action === 'END_SERVICE') return { ...b, status: 'COMPLETED' };
+  const handleProviderAction = async (bookingId: string, action: string) => {
+    try {
+      const docRef = doc(db, 'bookings', bookingId);
+      let newStatus = '';
+      if (action === 'ACCEPT') newStatus = 'ACCEPTED_BY_SP';
+      else if (action === 'DECLINE') newStatus = 'DECLINED';
+      else if (action === 'START_SERVICE') newStatus = 'IN_PROGRESS';
+      else if (action === 'END_SERVICE') newStatus = 'COMPLETED';
+
+      if (newStatus) {
+        await updateDoc(docRef, { status: newStatus });
+        addLog({ 
+          action: `Provider ${action}ed Booking ${bookingId}`, 
+          admin: "System", 
+          time: new Date().toLocaleString(), 
+          type: 'system',
+          details: `Action: ${action} triggered by Partner ID ${providerProfile.spId}`
+        });
+        if (action === 'ACCEPT' || action === 'START_SERVICE' || action === 'END_SERVICE') {
+            playNotification();
+        }
       }
-      return b;
-    }));
-    
-    addLog({ 
-      action: `Provider ${action}ed Booking ${bookingId}`, 
-      admin: "System", 
-      time: new Date().toLocaleString(), 
-      type: 'system',
-      details: `Action: ${action} triggered by Partner ID ${providerProfile.spId}`
-    });
-    
-    if (action === 'ACCEPT' || action === 'START_SERVICE' || action === 'END_SERVICE') {
-        playNotification();
+    } catch(e) {
+      console.error("Error updating booking status", e);
     }
   };
 
-  const handleConfirmBooking = (bookingId: string) => {
-    setActiveBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'CONFIRMED', otp: Math.floor(1000 + Math.random() * 9000).toString() } : b));
-    addLog({ action: `Booking ${bookingId} finalized by Admin`, admin: "Ashvin", time: new Date().toLocaleString(), type: 'admin' });
+  const handleConfirmBooking = async (bookingId: string) => {
+    try {
+      const docRef = doc(db, 'bookings', bookingId);
+      const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+      await updateDoc(docRef, { status: 'CONFIRMED', otp: generatedOtp });
+      addLog({ action: `Booking ${bookingId} finalized by Admin. OTP: ${generatedOtp}`, admin: "Ashvin", time: new Date().toLocaleString(), type: 'admin' });
+    } catch(e) {
+      console.error(e);
+    }
+  };
+
+  const handleCustomerBookingConfirm = async (details: any) => {
+    if (!user) {
+      alert("Please login first.");
+      return;
+    }
+    try {
+      const newBooking = {
+        customerId: user.uid,
+        customer: profile?.name || user.email,
+        service: details.serviceName,
+        date: details.date,
+        address: details.address,
+        requirements: details.requirements || '',
+        status: 'PENDING_PROCESS', // "show process pending to the customer"
+        bookingDate: new Date().toISOString(),
+        providerId: null,
+      };
+      
+      const docRef = await addDoc(collection(db, 'bookings'), newBooking);
+      
+      // Update local state if not using onSnapshot (though we are using onSnapshot)
+      // setActiveBookings is populated from snapshot.
+      
+      alert("Booking confirmed. Pending process.");
+      setIsBookingOpen(false);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to confirm booking.");
+    }
   };
   const [bankDetails, setBankDetails] = useState({
     accountHolder: 'CAREVIA SOLUTIONS PVT LTD',
@@ -4731,6 +5106,9 @@ export default function App() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisStep, setAnalysisStep] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [urgencyLevel, setUrgencyLevel] = useState('Standard');
+  const [requirementDesc, setRequirementDesc] = useState('');
+  const [recommendedKeywords, setRecommendedKeywords] = useState<string[]>([]);
 
   const analysisSteps = [
     "Analyzing nature of concern...",
@@ -4762,6 +5140,11 @@ export default function App() {
             if (mapping[selectedCategory]) {
               setActiveServiceTab(mapping[selectedCategory]);
             }
+            
+            // Extract keywords from description for sorting services
+            const keywords = requirementDesc.toLowerCase().split(' ').filter(word => word.length > 3);
+            setRecommendedKeywords(keywords);
+
             document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' });
           }, 800);
           return prev;
@@ -4943,7 +5326,15 @@ export default function App() {
                   <label className="label-bold mb-4 block">Urgency Level</label>
                   <div className="flex flex-wrap sm:flex-nowrap gap-4">
                      {['Standard', 'Priority', 'Emergency'].map(level => (
-                       <button key={level} className="flex-1 min-w-[100px] py-4 border border-white/10 rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-primary/10 hover:border-primary/40 transition-all">
+                       <button 
+                         key={level} 
+                         onClick={() => setUrgencyLevel(level)}
+                         className={`flex-1 min-w-[100px] py-4 border rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${
+                           urgencyLevel === level 
+                             ? 'bg-primary/20 border-primary text-primary' 
+                             : 'border-white/10 hover:bg-primary/10 hover:border-primary/40'
+                         }`}
+                       >
                         {level}
                        </button>
                      ))}
@@ -4952,7 +5343,13 @@ export default function App() {
               </div>
               <div className="mb-8">
                   <label className="label-bold mb-4 block">Brief Description</label>
-                  <textarea rows={4} className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-2xl text-sm focus:border-primary outline-none transition-colors resize-none" placeholder="Provide details for our AI to analyze..." />
+                  <textarea 
+                    rows={4} 
+                    value={requirementDesc}
+                    onChange={(e) => setRequirementDesc(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-2xl text-sm focus:border-primary outline-none transition-colors resize-none text-white" 
+                    placeholder="Provide details for our AI to analyze..." 
+                  />
               </div>
               <Button 
                 variant="primary" 
@@ -4971,6 +5368,7 @@ export default function App() {
           setActiveTab={setActiveServiceTab} 
           userLocation={userLocation}
           setUserLocation={setUserLocation}
+          recommendedKeywords={recommendedKeywords}
           onBook={(name) => {
             setSelectedBookingService(name);
             setIsBookingOpen(true);
@@ -5056,7 +5454,16 @@ export default function App() {
         onOpenAdmin={() => setIsAdminDashboardOpen(true)} 
         onClose={() => setIsAuthOpen(false)} 
         onLogin={() => setIsLoggedIn(true)}
-        onProviderLogin={() => setIsProviderDashboardOpen(true)}
+        onProviderLogin={(data: any) => {
+           setProviderProfile({
+             name: data?.name || 'Aarav Sharma',
+             spId: data?.spId || 'SP-9921',
+             isVerified: data?.isVerified || true,
+             isDocsUploaded: true,
+             preferredCities: data?.preferredCities || []
+           });
+           setIsProviderDashboardOpen(true);
+        }}
       />
       {isAdminDashboardOpen && (
         <AdminDashboard 
@@ -5107,6 +5514,7 @@ export default function App() {
         isOpen={isBookingOpen} 
         serviceName={selectedBookingService} 
         onClose={() => setIsBookingOpen(false)} 
+        onConfirm={handleCustomerBookingConfirm}
       />
       <ProviderRegistrationModal 
         isOpen={isProviderModalOpen} 
