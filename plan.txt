@@ -1,0 +1,18 @@
+1. Modify App.tsx login panel to have a single input field `identifier` for "Email or Phone Number".
+2. If identifier is Phone:
+   - Call `signInWithPhoneNumber`.
+   - Show OTP input.
+   - On verify, logged in.
+3. If identifier is Email:
+   - Call `sendSignInLinkToEmail`.
+   - Show message: "A login link has been sent to your email."
+4. On App load, check `isSignInWithEmailLink`.
+   - If true, call `signInWithEmailLink`.
+   - After successful login, show a modal to "Create Password" if they don't have one.
+5. Google Sign In:
+   - Keep the Google button.
+   - After Google login, show "Create Password" if they don't have one.
+6. The "Create Password" modal:
+   - "You are logged in! Create a password for future email logins (optional)."
+   - Input: Password.
+   - Calls `updatePassword(auth.currentUser, password)`.
