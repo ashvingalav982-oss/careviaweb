@@ -78,6 +78,10 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithCustomToken,
+  multiFactor,
+  PhoneAuthProvider,
+  PhoneMultiFactorGenerator,
+  getMultiFactorResolver
 } from 'firebase/auth';
 import { 
   doc, 
@@ -526,15 +530,22 @@ const WalletModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void
 };
 
 const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: any) => {
-  const [mode, setMode] = useState('login'); // login, signup, admin
+  const [mode, setMode] = useState('login'); // login, signup, sp, mfa
+  const [method, setMethod] = useState('email'); // mobile, email (kept for compatibility with old UI if needed)
   const [showPass, setShowPass] = useState(false);
-  const [method, setMethod] = useState('mobile'); // mobile, email
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
   const [isResending, setIsResending] = useState(false);
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  
+  const [resolver, setResolver] = useState<any>(null);
+  const [verificationId, setVerificationId] = useState('');
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setOtpSent(false);
@@ -543,12 +554,13 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
     setOtp('');
     setPhone('');
     setEmail('');
-  }, [mode, method, isOpen]);
+    setPassword('');
+    setName('');
+    setResolver(null);
+    setVerificationId('');
+    setConfirmationResult(null);
+  }, [mode, isOpen]);
 
-  const [confirmationResult, setConfirmationResult] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-
-  
   const saveToExcel = async (userData: any) => {
     try {
       const formData = new URLSearchParams();
@@ -569,28 +581,29 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
     if ((window as any).recaptchaVerifier) {
       return (window as any).recaptchaVerifier;
     }
-
-    // To apply the default browser preference instead of explicitly setting it.
     auth.useDeviceLanguage();
-
     const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
       'size': 'invisible',
-      'callback': (response: any) => {
-        // reCAPTCHA solved, allow signInWithPhoneNumber.
-        console.log('reCAPTCHA solved', response);
-      },
-      'expired-callback': () => {
-        // Response expired. Ask user to solve reCAPTCHA again.
-        console.log('reCAPTCHA expired');
-      }
+      'callback': () => {},
+      'expired-callback': () => {}
     });
-
     verifier.render().then((widgetId) => {
       (window as any).recaptchaWidgetId = widgetId;
     });
-
     (window as any).recaptchaVerifier = verifier;
     return verifier;
+  };
+
+  const sendWelcomeEmail = async (userEmail: string) => {
+    try {
+      if (userEmail) {
+        await fetch('/.netlify/functions/send-welcome', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: userEmail })
+        });
+      }
+    } catch(e) { console.error('Error sending welcome email:', e); }
   };
 
   const handleGoogleLogin = async () => {
@@ -600,6 +613,7 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
       const provider = new GoogleAuthProvider();
       const cred = await signInWithPopup(auth, provider);
       const user = cred.user;
+        await sendEmailVerification(user);
       
       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
@@ -611,25 +625,35 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
         lastLogin: serverTimestamp()
       }, { merge: true });
       
-      try {
-        await saveToExcel({ uid: user.uid, role: 'customer', phone: '', email: user.email || '' });
-      } catch(e) {}
-      
-      try {
-        if (user.email) {
-          await fetch('/.netlify/functions/send-welcome', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: user.email })
-          });
-        }
-      } catch(e) { console.error('Error sending welcome email:', e); }
+      try { await saveToExcel({ uid: user.uid, role: 'customer', phone: '', email: user.email || '' }); } catch(e) {}
+      await sendWelcomeEmail(user.email || '');
       
       onLogin();
       onClose();
     } catch(err: any) {
       console.error(err);
-      setError(err.message || 'Google Sign-In failed');
+      if (err.code === 'auth/multi-factor-auth-required') {
+        const res = getMultiFactorResolver(auth, err);
+        setResolver(res);
+        
+        // Handle MFA
+        if (res.hints[0].factorId === PhoneMultiFactorGenerator.FACTOR_ID) {
+          const phoneInfoOptions = {
+            multiFactorHint: res.hints[0],
+            session: res.session
+          };
+          const phoneAuthProvider = new PhoneAuthProvider(auth);
+          const verifier = setupRecaptcha();
+          const vid = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, verifier);
+          setVerificationId(vid);
+          setMode('mfa');
+          setOtpSent(true);
+        } else {
+          setError('Unsupported second factor.');
+        }
+      } else {
+        setError(err.message || 'Google Sign-In failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -640,147 +664,112 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
     setLoading(true);
     
     try {
-      if (method === 'mobile') {
-        if (otpSent) {
-          if (!otp) throw new Error('Please enter the OTP');
-          if (!confirmationResult) throw new Error('Session expired, please try again.');
+      if (mode === 'mfa') {
+        if (!otp) throw new Error('Please enter the OTP');
+        
+        if (resolver) { // MFA Sign in
+          const cred = PhoneAuthProvider.credential(verificationId, otp);
+          const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
+          const userCred = await resolver.resolveSignIn(multiFactorAssertion);
+          const user = userCred.user;
           
-          const cred = await confirmationResult.confirm(otp);
-          const user = cred.user;
-
-          let role = 'customer';
-          if (phone.startsWith('99')) role = 'provider';
-          if (phone === import.meta.env.VITE_ADMIN_PHONE) role = 'admin';
-
-          // Initial Profile Sync
           await setDoc(doc(db, 'users', user.uid), {
-            uid: user.uid,
-            phone: phone,
-            role: role,
-            updatedAt: serverTimestamp(),
             lastLogin: serverTimestamp()
           }, { merge: true });
-          await saveToExcel({ uid: user.uid, role: role, phone: phone || '', email: '' });
-
-          if (role === 'admin') onOpenAdmin();
-          else if (role === 'provider') onProviderLogin();
-          else onLogin();
+          
+          onLogin();
           onClose();
-        } else {
-          if (phone.length < 10) throw new Error('Invalid phone number');
-          const formattedPhone = phone.startsWith('+') ? phone : `+91${phone}`;
-          const verifier = setupRecaptcha();
-          const result = await signInWithPhoneNumber(auth, formattedPhone, verifier);
-          setConfirmationResult(result);
-          setOtpSent(true);
-        }
-      } else {
-        if (!otpSent) {
-          if (!email) throw new Error('Please enter your email');
-          const res = await fetch('/.netlify/functions/send-otp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email })
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error || 'Failed to send OTP');
-          if (data.mockOtp) alert('TEST MODE OTP: ' + data.mockOtp);
-          else if (data.previewUrl) alert('TEST MODE LINK: ' + data.previewUrl);
-          setOtpSent(true);
-        } else {
-          if (!otp) throw new Error('Please enter the OTP sent to your email');
-          const res = await fetch('/.netlify/functions/verify-otp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, otp })
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error || 'Invalid OTP');
+        } else if (confirmationResult) { // MFA Enrollment during signup
+          const cred = PhoneAuthProvider.credential(verificationId, otp);
+          const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
+          await multiFactor(auth.currentUser!).enroll(multiFactorAssertion, "Personal Phone");
           
-          let user;
-          try {
-            const cred = await signInWithCustomToken(auth, data.authToken);
-            user = cred.user;
-          } catch(err: any) {
-             throw new Error(err.message || 'Authentication failed with custom token');
-          }
+          // Refresh user to apply MFA claims
+          await auth.currentUser?.reload();
           
-          await setDoc(doc(db, 'users', user.uid), {
-            uid: user.uid,
-            email: user.email,
-            role: 'customer',
-            updatedAt: serverTimestamp(),
-            lastLogin: serverTimestamp()
-          }, { merge: true });
-          
-          try {
-             await saveToExcel({ uid: user.uid, role: 'customer', phone: '', email: user.email || '' });
-          } catch(e) {}
-          
-          try {
-            if (user.email) {
-              await fetch('/.netlify/functions/send-welcome', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: user.email })
-              });
-            }
-          } catch(e) { console.error('Error sending welcome email:', e); }
-          
-          // AI Welcome Message
-          try {
-            const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-            const aiResp = await ai.models.generateContent({
-              model: "gemini-2.5-flash",
-              contents: [{ role: 'user', parts: [{ text: "Generate a short 1-sentence warm welcome message for a user named " + email.split('@')[0] + " who just logged into CAREVIA, a premium healthcare platform." }] }]
-            });
-            setTimeout(() => alert("CAREVIA AI: " + aiResp.text), 500);
-          } catch(e) { console.error('AI error', e); }
-
           onLogin();
           onClose();
         }
+      } else if (mode === 'login') {
+        if (!email || !password) throw new Error('Please enter email and password');
+        try {
+          const cred = await signInWithEmailAndPassword(auth, email, password);
+          const user = cred.user;
+        await sendEmailVerification(user);
+          
+          await setDoc(doc(db, 'users', user.uid), {
+            lastLogin: serverTimestamp()
+          }, { merge: true });
+          
+          onLogin();
+          onClose();
+        } catch(err: any) {
+          if (err.code === 'auth/multi-factor-auth-required') {
+            const res = getMultiFactorResolver(auth, err);
+            setResolver(res);
+            if (res.hints.length > 0 && res.hints[0].factorId === PhoneMultiFactorGenerator.FACTOR_ID) {
+              const phoneInfoOptions = {
+                multiFactorHint: res.hints[0],
+                session: res.session
+              };
+              const phoneAuthProvider = new PhoneAuthProvider(auth);
+              const verifier = setupRecaptcha();
+              const vid = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, verifier);
+              setVerificationId(vid);
+              setMode('mfa');
+              setOtpSent(true);
+            } else {
+              throw new Error('Unsupported second factor.');
+            }
+          } else {
+            throw err;
+          }
+        }
+      } else if (mode === 'signup') {
+        if (!email || !password || !phone) throw new Error('Please fill in all fields');
+        if (phone.length < 10) throw new Error('Invalid phone number');
+        
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        const user = cred.user;
+        await sendEmailVerification(user);
+        
+        await setDoc(doc(db, 'users', user.uid), {
+          uid: user.uid,
+          email: user.email,
+          displayName: name,
+          phone: phone,
+          role: 'customer',
+          updatedAt: serverTimestamp(),
+          lastLogin: serverTimestamp()
+        });
+        
+        try { await saveToExcel({ uid: user.uid, role: 'customer', phone, email }); } catch(e) {}
+        await sendWelcomeEmail(user.email || '');
+        
+        // MFA Enrollment
+        const session = await multiFactor(user).getSession();
+        const formattedPhone = phone.startsWith('+') ? phone : `+91${phone}`;
+        const phoneInfoOptions = {
+          phoneNumber: formattedPhone,
+          session: session
+        };
+        const phoneAuthProvider = new PhoneAuthProvider(auth);
+        const verifier = setupRecaptcha();
+        const vid = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, verifier);
+        
+        setVerificationId(vid);
+        setConfirmationResult(true);
+        setMode('mfa');
+        setOtpSent(true);
       }
     } catch (err: any) {
       console.error(err);
-      if (err.code === 'auth/operation-not-allowed') {
-        setError('Authentication method not enabled. Please enable "Google" and "Phone" sign-in in your Firebase Console (Authentication > Sign-in method).');
-      } else {
-        setError(err.message || 'Authentication failed');
-      }
+      setError(err.message || 'Authentication failed');
       if (err.code === 'auth/invalid-verification-code') {
         setError('Invalid OTP. Please try again.');
       }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleResend = async () => {
-    setIsResending(true);
-    setError('');
-    setOtp('');
-    try {
-      if (method === 'mobile') {
-        const formattedPhone = phone.startsWith('+') ? phone : `+91${phone}`;
-        const verifier = setupRecaptcha();
-        const result = await signInWithPhoneNumber(auth, formattedPhone, verifier);
-        setConfirmationResult(result);
-      } else {
-        const res = await fetch('/.netlify/functions/send-otp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to send OTP');
-        if (data.mockOtp) alert('TEST MODE OTP: ' + data.mockOtp);
-        else if (data.previewUrl) alert('TEST MODE LINK: ' + data.previewUrl);
-      }
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsResending(false);
     }
   };
 
@@ -790,13 +779,11 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
       if (!spIdVal) throw new Error("Please enter SP ID NO");
       const q = query(collection(db, 'users'), where('spId', '==', spIdVal));
       const snap = await getDocs(q);
-      if (snap.empty) {
-        throw new Error("Invalid SP ID NO");
-      }
+      if (snap.empty) throw new Error("Invalid SP ID NO");
+      
       const provider = snap.docs[0].data();
-      if (!provider.isVerified) {
-        throw new Error("Your application is pending or rejected.");
-      }
+      if (!provider.isVerified) throw new Error("Your application is pending or rejected.");
+      
       onProviderLogin(provider);
       onClose();
     } catch(err: any) {
@@ -815,243 +802,198 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
         className="absolute inset-0 bg-black/80 backdrop-blur-sm"
       />
       <motion.div 
-        initial={{ opacity: 0, scale: 0.9, y: 30 }}
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="glass-card w-full max-w-md relative z-10 overflow-hidden"
+        className="relative bg-[#0a0a0a] border border-white/10 p-8 rounded-3xl w-full max-w-md overflow-hidden"
       >
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold uppercase tracking-tight">
-            {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : mode === 'sp' ? 'Provider Access' : 'Admin Hub'}
-          </h2>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-            <X className="w-5 h-5 text-white/70" />
-          </button>
-        </div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
 
-        {mode !== 'sp' && (
-          <div className="flex gap-4 mb-6">
-            <button 
-              onClick={() => setMethod('mobile')}
-              className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest border-b-2 transition-all ${method === 'mobile' ? 'border-primary text-primary' : 'border-white/10 text-white/60'}`}
-            >
-              Mobile
-            </button>
-            <button 
-              onClick={() => setMethod('email')}
-              className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest border-b-2 transition-all ${method === 'email' ? 'border-primary text-primary' : 'border-white/10 text-white/60'}`}
-            >
-              Email
+        <div className="relative z-10">
+          <div className="flex justify-between items-start mb-8">
+            <div>
+              <h2 className="text-2xl font-black uppercase tracking-widest text-primary flex items-center gap-3">
+                {mode === 'sp' ? <ShieldCheck className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
+                {mode === 'login' ? 'Secure Login' : mode === 'signup' ? 'Create Access' : mode === 'mfa' ? 'Verify Identity' : 'Provider Access'}
+              </h2>
+              <p className="text-sm text-white/50 mt-2 font-medium">
+                {mode === 'sp' ? 'Enter your authorized SP ID' : mode === 'mfa' ? 'Enter the security code sent to your phone' : 'CAREVIA Client Portal'}
+              </p>
+            </div>
+            <button onClick={onClose} className="p-2 bg-white/5 hover:bg-white/10 rounded-full transition-colors text-white/50">
+              <X className="w-5 h-5" />
             </button>
           </div>
-        )}
 
-        <div className="space-y-4">
-          {mode === 'sp' ? (
-            <div className="space-y-4">
-               <div>
-                 <label className="label-bold mb-2 block">SP ID NO</label>
-                 <div className="flex gap-2">
-                   <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/70"><ShieldCheck className="w-4 h-4"/></div>
+          <div className="space-y-4">
+            {mode === 'sp' ? (
+              <div className="space-y-4">
+                 <div>
+                   <label className="label-bold mb-2 block">SP ID NO</label>
+                   <div className="flex gap-2">
+                     <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/70"><ShieldCheck className="w-4 h-4"/></div>
+                     <input 
+                       type="text" 
+                       value={email}
+                       onChange={(e) => setEmail(e.target.value)}
+                       className="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors font-mono tracking-wider" 
+                       placeholder="SP-XXXXX" 
+                     />
+                   </div>
+                 </div>
+                 {error && (
+                   <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest flex items-center gap-2">
+                     <AlertTriangle className="w-3 h-3" /> {error}
+                   </p>
+                 )}
+                 <Button variant="primary" className="w-full" onClick={handleSPLogin}>
+                   Login as Provider
+                 </Button>
+              </div>
+            ) : mode === 'mfa' ? (
+              <div className="space-y-4">
+                 <div>
+                   <label className="label-bold mb-2 block">Verification Code (SMS)</label>
                    <input 
                      type="text" 
-                     value={email}
-                     onChange={(e) => setEmail(e.target.value)}
-                     className="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors font-mono tracking-wider" 
-                     placeholder="SP-XXXXX" 
+                     value={otp}
+                     onChange={(e) => {
+                       setOtp(e.target.value);
+                       if (error) setError('');
+                     }}
+                     className="w-full bg-white/5 border border-white/10 focus:border-primary px-4 py-3 rounded-xl text-sm outline-none transition-all tracking-[0.5em] font-mono text-center" 
+                     placeholder="XXXXXX" 
                    />
                  </div>
-               </div>
-               {error && (
-                 <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest flex items-center gap-2">
-                   <AlertTriangle className="w-3 h-3" /> {error}
-                 </p>
-               )}
-               <Button variant="primary" className="w-full" onClick={handleSPLogin}>
-                 Login as Provider
-               </Button>
-            </div>
-          ) : method === 'mobile' ? (
-            <div className="space-y-4">
-               {mode === 'signup' && (
-                 <div>
-                   <label className="label-bold mb-2 block">Full Name</label>
-                   <input type="text" className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors" placeholder="Enter your full name" />
-                 </div>
-               )}
-               <div>
-                 <label className="label-bold mb-2 block">Phone Number</label>
-                 <div className="flex gap-2">
-                   <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/70">+91</div>
-                   <input 
-                     id="auth-tel" 
-                     type="tel" 
-                     value={phone}
-                     onChange={(e) => setPhone(e.target.value)}
-                     className="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors" 
-                     placeholder="Enter mobile number" 
-                   />
-                 </div>
-               </div>
-               {otpSent && (
-                 <motion.div 
-                   initial={{ opacity: 0, height: 0 }}
-                   animate={{ opacity: 1, height: 'auto' }}
-                   className="space-y-4"
-                 >
-                   <div>
-                     <div className="flex justify-between items-center mb-2">
-                       <label className="label-bold block">One Time Password</label>
-                       <button 
-                         onClick={handleResend}
-                         disabled={isResending}
-                         className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline disabled:opacity-50"
-                       >
-                         {isResending ? 'Sending Code...' : 'Resend Protocol'}
-                       </button>
+                 {error && (
+                   <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest mt-2 flex items-center gap-2">
+                     <AlertTriangle className="w-3 h-3" /> {error}
+                   </p>
+                 )}
+                 <div id="recaptcha-container"></div>
+                 <Button variant="primary" className="w-full" onClick={handleAction} disabled={loading}>
+                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify'}
+                 </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                 {mode === 'signup' && (
+                   <>
+                     <div>
+                       <label className="label-bold mb-2 block">Full Name</label>
+                       <input 
+                         type="text" 
+                         value={name}
+                         onChange={(e) => setName(e.target.value)}
+                         className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors" 
+                         placeholder="Enter your full name" 
+                       />
                      </div>
-                     <input 
-                       type="text" 
-                       value={otp}
-                       onChange={(e) => {
-                         setOtp(e.target.value);
-                         if (error) setError('');
-                       }}
-                       className={`w-full bg-white/5 border px-4 py-3 rounded-xl text-sm outline-none transition-all tracking-[0.5em] font-mono text-center ${error ? 'border-red-500/50 bg-red-500/5' : 'border-white/10 focus:border-primary'}`} 
-                       placeholder="XXXXXX" 
-                     />
-                     {error && (
-                       <motion.p 
-                         initial={{ opacity: 0, scale: 0.9 }}
-                         animate={{ opacity: 1, scale: 1 }}
-                         className="text-[10px] font-bold text-red-500 uppercase tracking-widest mt-2 flex items-center gap-2"
-                       >
-                         <AlertTriangle className="w-3 h-3" /> {error}
-                       </motion.p>
-                     )}
-                     <p className="text-[9px] text-white/40 mt-2 uppercase font-bold italic tracking-wider">Verification required via Secure SMS</p>
-                   </div>
-                 </motion.div>
-               )}
-               <div id="recaptcha-container"></div>
-               <Button variant="primary" className="w-full" onClick={handleAction} disabled={loading}>
-                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (otpSent ? (mode === 'login' ? 'Verify & Sign In' : 'Verify & Register') : 'Get Verification OTP')}
-               </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-               {mode === 'signup' && (
-                 <div>
-                   <label className="label-bold mb-2 block">Full Name</label>
-                   <input type="text" className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors" placeholder="Enter your full name" />
-                 </div>
-               )}
-               <div>
-                 <label className="label-bold mb-2 block">Email Address</label>
-                 <div className="flex gap-2">
-                   <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/70"><Mail className="w-4 h-4"/></div>
-                   <input 
-                     type="email" 
-                     value={email}
-                     onChange={(e) => setEmail(e.target.value)}
-                     className="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors" 
-                     placeholder="Enter your email" 
-                   />
-                 </div>
-               </div>
-               {otpSent && (
-                 <motion.div 
-                   initial={{ opacity: 0, height: 0 }}
-                   animate={{ opacity: 1, height: 'auto' }}
-                   className="space-y-4"
-                 >
-                   <div>
-                     <div className="flex justify-between items-center mb-2">
-                       <label className="label-bold block">Email OTP</label>
+                     <div>
+                       <label className="label-bold mb-2 block">Phone Number (For MFA)</label>
+                       <div className="flex gap-2">
+                         <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/70">+91</div>
+                         <input 
+                           type="tel" 
+                           value={phone}
+                           onChange={(e) => setPhone(e.target.value)}
+                           className="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors" 
+                           placeholder="Enter mobile number" 
+                         />
+                       </div>
                      </div>
+                   </>
+                 )}
+                 <div>
+                   <label className="label-bold mb-2 block">Email Address</label>
+                   <div className="flex gap-2">
+                     <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/70"><Mail className="w-4 h-4"/></div>
                      <input 
-                       type="text" 
-                       value={otp}
-                       onChange={(e) => {
-                         setOtp(e.target.value);
-                         if (error) setError('');
-                       }}
-                       className={`w-full bg-white/5 border px-4 py-3 rounded-xl text-sm outline-none transition-all tracking-[0.5em] font-mono text-center ${error ? 'border-red-500/50 bg-red-500/5' : 'border-white/10 focus:border-primary'}`} 
-                       placeholder="XXXXXX" 
+                       type="email" 
+                       value={email}
+                       onChange={(e) => setEmail(e.target.value)}
+                       className="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors" 
+                       placeholder="Enter your email" 
                      />
-                     {error && (
-                       <motion.p 
-                         initial={{ opacity: 0, scale: 0.9 }}
-                         animate={{ opacity: 1, scale: 1 }}
-                         className="text-[10px] font-bold text-red-500 uppercase tracking-widest mt-2 flex items-center gap-2"
-                       >
-                         <AlertTriangle className="w-3 h-3" /> {error}
-                       </motion.p>
-                     )}
-                     <p className="text-[9px] text-white/40 mt-2 uppercase font-bold italic tracking-wider">Verification sent to your email.</p>
                    </div>
-                 </motion.div>
-               )}
-               <Button variant="primary" className="w-full" onClick={handleAction} disabled={loading}>
-                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (otpSent ? (mode === 'login' ? 'Verify & Sign In' : 'Verify & Register') : 'Get Verification OTP')}
-               </Button>
+                 </div>
+                 <div>
+                   <label className="label-bold mb-2 block">Password</label>
+                   <div className="flex gap-2 relative">
+                     <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/70"><Lock className="w-4 h-4"/></div>
+                     <input 
+                       type={showPass ? "text" : "password"}
+                       value={password}
+                       onChange={(e) => setPassword(e.target.value)}
+                       className="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors" 
+                       placeholder="Enter your password" 
+                     />
+                     <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-3 text-white/50 hover:text-white">
+                        {showPass ? 'Hide' : 'Show'}
+                     </button>
+                   </div>
+                 </div>
+                 
+                 {error && (
+                   <motion.p 
+                     initial={{ opacity: 0, scale: 0.9 }}
+                     animate={{ opacity: 1, scale: 1 }}
+                     className="text-[10px] font-bold text-red-500 uppercase tracking-widest mt-2 flex items-center gap-2"
+                   >
+                     <AlertTriangle className="w-3 h-3" /> {error}
+                   </motion.p>
+                 )}
+                 
+                 <div id="recaptcha-container"></div>
+                 <Button variant="primary" className="w-full" onClick={handleAction} disabled={loading}>
+                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (mode === 'login' ? 'Sign In' : 'Create Account')}
+                 </Button>
+              </div>
+            )}
+          </div>
+
+          {mode !== 'sp' && mode !== 'mfa' && (
+            <button 
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              className="mt-6 w-full py-3 bg-white text-black rounded-xl text-sm font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-neutral-200 transition-colors disabled:opacity-50"
+            >
+              <svg viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/><path d="M1 1h22v22H1z" fill="none"/></svg>
+              Google
+            </button>
+          )}
+
+          <div className="mt-8 pt-6 border-t border-white/5 text-center flex flex-col gap-3">
+            {mode === 'login' ? (
+              <p className="text-sm text-white/60">
+                New to CAREVIA? <button onClick={() => setMode('signup')} className="text-primary font-bold hover:underline">Create Account</button>
+              </p>
+            ) : mode === 'signup' ? (
+              <p className="text-sm text-white/60">
+                Already have an account? <button onClick={() => setMode('login')} className="text-primary font-bold hover:underline">Sign In</button>
+              </p>
+            ) : null}
+            <div className="flex justify-center gap-4 pt-4">
+               <button 
+                 onClick={() => { onClose(); onOpenAdmin(); }}
+                 className="text-[10px] uppercase tracking-widest font-bold text-white/40 hover:text-white transition-colors"
+               >
+                 Admin Entrance
+               </button>
+               <div className="w-px h-4 bg-white/10" />
+               <button 
+                 onClick={() => { setMode('sp'); }}
+                 className="text-[10px] uppercase tracking-widest font-bold text-primary opacity-60 hover:opacity-100 transition-all underline decoration-primary/30 underline-offset-4"
+               >
+                 Provider Login
+               </button>
             </div>
-          )}
-        </div>
-
-        <div className="relative mt-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-white/10"></div>
-          </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="bg-surface px-2 text-white/60 uppercase tracking-widest font-bold">Or continue with</span>
-          </div>
-        </div>
-        <button 
-          onClick={handleGoogleLogin}
-          disabled={loading}
-          className="mt-6 w-full py-3 bg-white text-black rounded-xl text-sm font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-neutral-200 transition-colors disabled:opacity-50"
-        >
-          <svg viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/><path d="M1 1h22v22H1z" fill="none"/></svg>
-          Google
-        </button>
-
-        <div className="mt-8 pt-6 border-t border-white/5 text-center flex flex-col gap-3">
-          {mode === 'login' ? (
-            <p className="text-sm text-white/60">
-              New to CAREVIA? <button onClick={() => setMode('signup')} className="text-primary font-bold hover:underline">Create Account</button>
-            </p>
-          ) : (
-            <p className="text-sm text-white/60">
-              Already have an account? <button onClick={() => setMode('login')} className="text-primary font-bold hover:underline">Sign In</button>
-            </p>
-          )}
-          <div className="flex justify-center gap-4 pt-4">
-             <button 
-               onClick={() => {
-                 onClose();
-                 onOpenAdmin();
-               }}
-               className="text-[10px] uppercase tracking-widest font-bold text-white/40 hover:text-white transition-colors"
-             >
-               Admin Entrance
-             </button>
-             <div className="w-px h-4 bg-white/10" />
-             <button 
-               onClick={() => {
-                 setMode('sp');
-                 setMethod('sp_id');
-               }}
-               className="text-[10px] uppercase tracking-widest font-bold text-primary opacity-60 hover:opacity-100 transition-all underline decoration-primary/30 underline-offset-4"
-             >
-               Provider Login
-             </button>
           </div>
         </div>
       </motion.div>
     </div>
   );
 };
-
 const SubscriptionPlans = ({ onUpgrade }: any) => {
   const [selectedPlanIdx, setSelectedPlanIdx] = useState<number | null>(null);
   

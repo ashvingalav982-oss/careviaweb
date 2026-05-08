@@ -1,5 +1,4 @@
 import nodemailer from 'nodemailer';
-import twilio from 'twilio';
 
 export default async (req: Request) => {
   if (req.method !== 'POST') {
@@ -66,22 +65,9 @@ export default async (req: Request) => {
       }
     }
 
-    // Send SMS
-    if (phone && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER) {
-      try {
-        const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-        await client.messages.create({
-          body: messageText,
-          from: process.env.TWILIO_PHONE_NUMBER,
-          to: phone.startsWith('+') ? phone : `+91${phone}` // Defaulting to India code if not provided
-        });
-        smsSent = true;
-      } catch (e) {
-        console.error('Failed to send SMS via Twilio:', e);
-      }
-    } else if (phone) {
-       console.log('Twilio credentials not found, logging SMS instead:', messageText);
-       smsSent = true; // Pretend it was sent for dev
+    if (phone) {
+       console.log('SMS sending disabled, logging SMS instead:', messageText);
+       smsSent = true; 
     }
 
     return new Response(JSON.stringify({ 
