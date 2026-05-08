@@ -35,7 +35,6 @@
         "npm:react@19",
         "npm:tailwindcss@^4.1.14",
         "npm:tsx@^4.21.0",
-        "npm:twilio@6",
         "npm:typescript@~5.8.2",
         "npm:vite@^6.2.0"
       ]

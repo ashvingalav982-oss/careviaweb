@@ -613,7 +613,9 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
       const provider = new GoogleAuthProvider();
       const cred = await signInWithPopup(auth, provider);
       const user = cred.user;
+      if (!user.emailVerified) {
         await sendEmailVerification(user);
+      }
       
       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
@@ -695,7 +697,9 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
         try {
           const cred = await signInWithEmailAndPassword(auth, email, password);
           const user = cred.user;
+      if (!user.emailVerified) {
         await sendEmailVerification(user);
+      }
           
           await setDoc(doc(db, 'users', user.uid), {
             lastLogin: serverTimestamp()
@@ -731,7 +735,9 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
         
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         const user = cred.user;
+      if (!user.emailVerified) {
         await sendEmailVerification(user);
+      }
         
         await setDoc(doc(db, 'users', user.uid), {
           uid: user.uid,
