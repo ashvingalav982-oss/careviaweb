@@ -542,7 +542,7 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   
-  const [spStep, setSpStep] = useState('spId');
+  const [spStep, setSpStep] = useState('phone');
   const [spData, setSpData] = useState<any>(null);
   const [spPassword, setSpPassword] = useState('');
   
@@ -560,7 +560,7 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
     setEmail('');
     setPassword('');
     setName('');
-    setSpStep('spId');
+    setSpStep('phone');
     setSpData(null);
     setSpPassword('');
     setResolver(null);
@@ -810,44 +810,68 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
 
   const handleSPLogin = async () => {
     try {
-      if (spStep === 'spId') {
-        const spIdVal = email.trim();
-        if (!spIdVal) throw new Error("Please enter SP ID NO");
-        const q = query(collection(db, 'users'), where('spId', '==', spIdVal));
-        const snap = await getDocs(q);
-        if (snap.empty) throw new Error("Invalid SP ID NO");
+      setLoading(true);
+      setError('');
+      if (spStep === 'phone') {
+        const phoneVal = phone.trim();
+        if (!phoneVal || phoneVal.length < 10) throw new Error("Please enter a valid mobile number.");
         
-        const providerDoc = snap.docs[0];
-        const provider = providerDoc.data();
-        if (!provider.isVerified) throw new Error("Your application is pending or rejected.");
+        const res = await fetch('/api/sp-applications');
+        const data = await res.json();
+        const providerApp = data.find((p: any) => p.phone === phoneVal && p.isVerified === true);
         
-        setSpData({ id: providerDoc.id, ...provider });
-        
-        if (provider.hasSetPassword) {
-          setSpStep('loginPassword');
-        } else {
-          setSpStep('createPassword');
+        if (!providerApp) {
+          throw new Error("Phone number not registered or application pending.");
         }
-      } else if (spStep === 'createPassword') {
-         if (!spPassword || spPassword.length < 6) throw new Error("Password must be at least 6 characters.");
-         await updateDoc(doc(db, 'users', spData.id), {
-            hasSetPassword: true,
-            spPassword: spPassword
-         });
-         onProviderLogin({ ...spData, hasSetPassword: true, spPassword });
-         onClose();
-      } else if (spStep === 'loginPassword') {
-         if (!spPassword) throw new Error("Please enter your password.");
-         if (spData.spPassword !== spPassword) throw new Error("Incorrect password.");
-         onProviderLogin(spData);
-         onClose();
+        
+        setSpData(providerApp);
+        
+        if (!(window as any).spRecaptchaVerifier) {
+          (window as any).spRecaptchaVerifier = new RecaptchaVerifier(auth, 'sp-recaptcha-container', {
+            size: 'invisible'
+          });
+        }
+        const appVerifier = (window as any).spRecaptchaVerifier;
+        const confirmationResult = await signInWithPhoneNumber(auth, "+91" + phoneVal, appVerifier);
+        
+        (window as any).spConfirmationResult = confirmationResult;
+        setSpStep('otp');
+        
+      } else if (spStep === 'otp') {
+        if (!otp || otp.length < 6) throw new Error("Please enter the 6-digit verification code.");
+        
+        const confirmationResult = (window as any).spConfirmationResult;
+        if (!confirmationResult) throw new Error("Session expired. Please try again.");
+        
+        const result = await confirmationResult.confirm(otp);
+        const user = result.user;
+        
+        await setDoc(doc(db, 'users', user.uid), {
+          uid: user.uid,
+          role: 'provider',
+          name: spData.name,
+          phone: spData.phone,
+          spId: spData.spId,
+          isVerified: true,
+          status: 'Confirmed',
+          lastLogin: serverTimestamp()
+        }, { merge: true });
+        
+        onProviderLogin({ id: user.uid, ...spData });
+        onClose();
       }
     } catch(err: any) {
+      console.error(err);
       let errorMessage = err.message || 'Login failed.';
       if (errorMessage.includes('Firebase:')) {
-        errorMessage = 'A database error occurred. Please try again.';
+        errorMessage = 'An authentication error occurred. Please try again.';
+      }
+      if (err.code === 'auth/invalid-verification-code') {
+        errorMessage = 'Invalid OTP. Please try again.';
       }
       setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -888,47 +912,33 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
           <div className="space-y-4">
             {mode === 'sp' ? (
               <div className="space-y-4">
-                 {spStep === 'spId' ? (
+                 {spStep === 'phone' ? (
                    <div>
-                     <label className="label-bold mb-2 block">SP ID NO</label>
+                     <label className="label-bold mb-2 block">Phone Number</label>
                      <div className="flex gap-2">
-                       <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/70"><ShieldCheck className="w-4 h-4"/></div>
+                       <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/70">+91</div>
                        <input 
-                         type="text" 
-                         value={email}
-                         onChange={(e) => setEmail(e.target.value)}
+                         type="tel" 
+                         value={phone}
+                         onChange={(e) => setPhone(e.target.value)}
                          className="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors font-mono tracking-wider" 
-                         placeholder="SP-XXXXX" 
-                       />
-                     </div>
-                   </div>
-                 ) : spStep === 'createPassword' ? (
-                   <div>
-                     <label className="label-bold mb-2 block">Create a Password (First Time)</label>
-                     <div className="flex gap-2">
-                       <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/70"><Lock className="w-4 h-4"/></div>
-                       <input 
-                         type="password" 
-                         value={spPassword}
-                         onChange={(e) => setSpPassword(e.target.value)}
-                         className="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors" 
-                         placeholder="Create a strong password" 
+                         placeholder="Enter registered mobile number" 
                        />
                      </div>
                    </div>
                  ) : (
                    <div>
-                     <label className="label-bold mb-2 block">Enter Password</label>
-                     <div className="flex gap-2">
-                       <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/70"><Lock className="w-4 h-4"/></div>
-                       <input 
-                         type="password" 
-                         value={spPassword}
-                         onChange={(e) => setSpPassword(e.target.value)}
-                         className="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors" 
-                         placeholder="Your password" 
-                       />
-                     </div>
+                     <label className="label-bold mb-2 block">Verification Code (SMS)</label>
+                     <input 
+                       type="text" 
+                       value={otp}
+                       onChange={(e) => {
+                         setOtp(e.target.value);
+                         if (error) setError('');
+                       }}
+                       className="w-full bg-white/5 border border-white/10 focus:border-primary px-4 py-3 rounded-xl text-sm outline-none transition-all tracking-[0.5em] font-mono text-center" 
+                       placeholder="XXXXXX" 
+                     />
                    </div>
                  )}
                  {error && (
@@ -936,8 +946,9 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
                      <AlertTriangle className="w-3 h-3" /> {error}
                    </p>
                  )}
-                 <Button variant="primary" className="w-full" onClick={handleSPLogin}>
-                   {spStep === 'spId' ? 'Verify ID' : spStep === 'createPassword' ? 'Create Password & Login' : 'Login as Provider'}
+                 <div id="sp-recaptcha-container"></div>
+                 <Button variant="primary" className="w-full" onClick={handleSPLogin} disabled={loading}>
+                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : spStep === 'phone' ? 'Send OTP' : 'Verify & Login'}
                  </Button>
               </div>
             ) : mode === 'mfa' ? (
@@ -2396,21 +2407,6 @@ const AdminDashboard = ({
 
         if (!res.ok) throw new Error("Failed to verify provider");
         
-        // Add to Firebase users collection so they can login
-        await addDoc(collection(db, 'users'), {
-          role: 'provider',
-          name: provider.name,
-          phone: provider.phone,
-          address: provider.address,
-          education: provider.education,
-          isVerified: true,
-          status: 'Confirmed',
-          verifiedBy: adminId,
-          spId: generatedSpId,
-          createdAt: serverTimestamp(),
-          verifiedAt: serverTimestamp()
-        });
-
         // Optimistically update UI
         setProviders(prev => prev.map(p => p.id === provider.id ? { ...p, status: 'Confirmed', isVerified: true, verifiedBy: adminId, spId: generatedSpId } : p));
         
