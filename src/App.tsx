@@ -810,7 +810,7 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="relative bg-[#0a0a0a] border border-white/10 p-8 rounded-3xl w-full max-w-md overflow-hidden"
+        className="relative glass-card p-8 rounded-3xl w-full max-w-md overflow-hidden"
       >
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
@@ -4182,7 +4182,7 @@ const ReviewsSection = () => {
                   <select
                     value={reviewForm.rating}
                     onChange={(e) => setReviewForm({...reviewForm, rating: Number(e.target.value)})}
-                    className="w-full bg-[#0a0a0a] border border-white/10 px-4 py-3 rounded-xl text-sm outline-none focus:border-primary text-white"
+                    className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm outline-none focus:border-primary text-white"
                   >
                     {[5,4,3,2,1].map(r => <option key={r} value={r}>{r} Stars</option>)}
                   </select>
