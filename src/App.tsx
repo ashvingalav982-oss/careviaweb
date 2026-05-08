@@ -542,6 +542,10 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   
+  const [spStep, setSpStep] = useState('spId');
+  const [spData, setSpData] = useState<any>(null);
+  const [spPassword, setSpPassword] = useState('');
+  
   const [resolver, setResolver] = useState<any>(null);
   const [verificationId, setVerificationId] = useState('');
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
@@ -556,6 +560,9 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
     setEmail('');
     setPassword('');
     setName('');
+    setSpStep('spId');
+    setSpData(null);
+    setSpPassword('');
     setResolver(null);
     setVerificationId('');
     setConfirmationResult(null);
@@ -803,17 +810,38 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
 
   const handleSPLogin = async () => {
     try {
-      const spIdVal = email.trim();
-      if (!spIdVal) throw new Error("Please enter SP ID NO");
-      const q = query(collection(db, 'users'), where('spId', '==', spIdVal));
-      const snap = await getDocs(q);
-      if (snap.empty) throw new Error("Invalid SP ID NO");
-      
-      const provider = snap.docs[0].data();
-      if (!provider.isVerified) throw new Error("Your application is pending or rejected.");
-      
-      onProviderLogin(provider);
-      onClose();
+      if (spStep === 'spId') {
+        const spIdVal = email.trim();
+        if (!spIdVal) throw new Error("Please enter SP ID NO");
+        const q = query(collection(db, 'users'), where('spId', '==', spIdVal));
+        const snap = await getDocs(q);
+        if (snap.empty) throw new Error("Invalid SP ID NO");
+        
+        const providerDoc = snap.docs[0];
+        const provider = providerDoc.data();
+        if (!provider.isVerified) throw new Error("Your application is pending or rejected.");
+        
+        setSpData({ id: providerDoc.id, ...provider });
+        
+        if (provider.hasSetPassword) {
+          setSpStep('loginPassword');
+        } else {
+          setSpStep('createPassword');
+        }
+      } else if (spStep === 'createPassword') {
+         if (!spPassword || spPassword.length < 6) throw new Error("Password must be at least 6 characters.");
+         await updateDoc(doc(db, 'users', spData.id), {
+            hasSetPassword: true,
+            spPassword: spPassword
+         });
+         onProviderLogin({ ...spData, hasSetPassword: true, spPassword });
+         onClose();
+      } else if (spStep === 'loginPassword') {
+         if (!spPassword) throw new Error("Please enter your password.");
+         if (spData.spPassword !== spPassword) throw new Error("Incorrect password.");
+         onProviderLogin(spData);
+         onClose();
+      }
     } catch(err: any) {
       let errorMessage = err.message || 'Login failed.';
       if (errorMessage.includes('Firebase:')) {
@@ -860,26 +888,56 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
           <div className="space-y-4">
             {mode === 'sp' ? (
               <div className="space-y-4">
-                 <div>
-                   <label className="label-bold mb-2 block">SP ID NO</label>
-                   <div className="flex gap-2">
-                     <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/70"><ShieldCheck className="w-4 h-4"/></div>
-                     <input 
-                       type="text" 
-                       value={email}
-                       onChange={(e) => setEmail(e.target.value)}
-                       className="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors font-mono tracking-wider" 
-                       placeholder="SP-XXXXX" 
-                     />
+                 {spStep === 'spId' ? (
+                   <div>
+                     <label className="label-bold mb-2 block">SP ID NO</label>
+                     <div className="flex gap-2">
+                       <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/70"><ShieldCheck className="w-4 h-4"/></div>
+                       <input 
+                         type="text" 
+                         value={email}
+                         onChange={(e) => setEmail(e.target.value)}
+                         className="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors font-mono tracking-wider" 
+                         placeholder="SP-XXXXX" 
+                       />
+                     </div>
                    </div>
-                 </div>
+                 ) : spStep === 'createPassword' ? (
+                   <div>
+                     <label className="label-bold mb-2 block">Create a Password (First Time)</label>
+                     <div className="flex gap-2">
+                       <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/70"><Lock className="w-4 h-4"/></div>
+                       <input 
+                         type="password" 
+                         value={spPassword}
+                         onChange={(e) => setSpPassword(e.target.value)}
+                         className="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors" 
+                         placeholder="Create a strong password" 
+                       />
+                     </div>
+                   </div>
+                 ) : (
+                   <div>
+                     <label className="label-bold mb-2 block">Enter Password</label>
+                     <div className="flex gap-2">
+                       <div className="bg-white/5 border border-white/10 px-3 py-3 rounded-xl text-sm font-bold text-white/70"><Lock className="w-4 h-4"/></div>
+                       <input 
+                         type="password" 
+                         value={spPassword}
+                         onChange={(e) => setSpPassword(e.target.value)}
+                         className="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors" 
+                         placeholder="Your password" 
+                       />
+                     </div>
+                   </div>
+                 )}
                  {error && (
                    <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest flex items-center gap-2">
                      <AlertTriangle className="w-3 h-3" /> {error}
                    </p>
                  )}
                  <Button variant="primary" className="w-full" onClick={handleSPLogin}>
-                   Login as Provider
+                   {spStep === 'spId' ? 'Verify ID' : spStep === 'createPassword' ? 'Create Password & Login' : 'Login as Provider'}
                  </Button>
               </div>
             ) : mode === 'mfa' ? (
@@ -1869,6 +1927,12 @@ const ProviderDashboard = ({ providerData, onUpdateProvider, onClose, bookings =
           >
             <BriefcaseMedical className="w-4 h-4" /> Bank Details
           </button>
+          <button 
+            onClick={() => setActiveTab('hours')}
+            className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'hours' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-muted'}`}
+          >
+            <Clock className="w-4 h-4" /> Working Hours
+          </button>
           
           <div className="mt-auto pt-6 border-t border-white/5">
              <button onClick={onLogout || onClose} className="flex items-center gap-3 w-full p-3 text-red-500/50 hover:text-red-500 text-xs font-bold uppercase tracking-widest">
@@ -2133,6 +2197,44 @@ const ProviderDashboard = ({ providerData, onUpdateProvider, onClose, bookings =
                       <input type="text" placeholder="IFSC Code" className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-xs outline-none focus:border-primary/50 uppercase text-white" />
                    </div>
                    <Button variant="primary" className="w-full py-4 text-xs tracking-[0.2em] mt-6" onClick={() => alert('Bank details submitted for verification.')}>SAVE BANK DETAILS</Button>
+                </div>
+             </div>
+           )}
+
+           {activeTab === 'hours' && (
+             <div className="max-w-4xl space-y-12 animate-in fade-in duration-500">
+                <SectionHeading title="Time Tracking" sub="Working Hours" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="glass-card p-8 border-white/10 flex flex-col items-center justify-center text-center">
+                    <Clock className="w-12 h-12 text-primary mb-4" />
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted mb-2">Hours This Week</p>
+                    <h3 className="text-5xl font-mono font-bold text-white mb-2">42.5<span className="text-lg text-white/50">h</span></h3>
+                    <div className="text-xs text-emerald-500 font-bold uppercase tracking-widest flex items-center gap-1">
+                      <TrendingUp className="w-3 h-3" /> +15% vs last week
+                    </div>
+                  </div>
+                  <div className="glass-card p-8 border-white/10">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted mb-6">Daily Breakdown</h4>
+                    <div className="space-y-4">
+                      {[
+                        { day: 'Mon', hours: '8.0h', pct: '80%' },
+                        { day: 'Tue', hours: '7.5h', pct: '75%' },
+                        { day: 'Wed', hours: '9.0h', pct: '90%' },
+                        { day: 'Thu', hours: '8.5h', pct: '85%' },
+                        { day: 'Fri', hours: '9.5h', pct: '95%' },
+                        { day: 'Sat', hours: '0.0h', pct: '0%' },
+                        { day: 'Sun', hours: '0.0h', pct: '0%' }
+                      ].map((item) => (
+                        <div key={item.day} className="flex items-center gap-4">
+                          <span className="text-xs font-bold w-8">{item.day}</span>
+                          <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-full bg-primary" style={{ width: item.pct }} />
+                          </div>
+                          <span className="text-xs font-mono font-bold text-white/70 w-10 text-right">{item.hours}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
              </div>
            )}
@@ -4072,7 +4174,6 @@ const LiveAlarm = ({ bookings, financialAlerts = [], isAdmin, isSP, onAcknowledg
     setLastCount(bookings.length);
   }, [bookings.length, isAdmin, isSP]);
 
-  // Check for status changes (e.g. SP Accepted)
   useEffect(() => {
     if (isAdmin) {
       const accepted = bookings.find((b: any) => b.status === 'ACCEPTED_BY_SP' && !b.adminNotified);
@@ -4084,8 +4185,17 @@ const LiveAlarm = ({ bookings, financialAlerts = [], isAdmin, isSP, onAcknowledg
         audio.play().catch(e => console.log("Sound blocked by browser:", e));
         // In a real app, we'd mark it as notified in DB
       }
+    } else if (!isAdmin && !isSP) {
+      const confirmed = bookings.find((b: any) => b.status === 'CONFIRMED' && !b.customerNotified);
+      if (confirmed) {
+        setCurrentFinancial(null);
+        setCurrentBooking(confirmed);
+        setShow(true);
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        audio.play().catch(e => console.log("Sound blocked by browser:", e));
+      }
     }
-  }, [bookings, isAdmin]);
+  }, [bookings, isAdmin, isSP]);
 
   if (!show) return null;
 
@@ -4111,7 +4221,7 @@ const LiveAlarm = ({ bookings, financialAlerts = [], isAdmin, isSP, onAcknowledg
           </div>
        </div>
        <p className="text-[10px] text-white/80 mb-6 font-bold uppercase tracking-widest leading-relaxed">
-          {isFinancial ? currentFinancial.details : (isAdmin ? 'A partner has accepted a contract. Approval required.' : 'New service request detected in your sector.')}
+          {isFinancial ? currentFinancial.details : (isAdmin ? 'A partner has accepted a contract. Approval required.' : (!isSP ? `Your booking is confirmed! OTP: ${currentBooking?.otp}` : 'New service request detected in your sector.'))}
        </p>
        <div className="flex gap-3">
           <Button 
@@ -4119,7 +4229,7 @@ const LiveAlarm = ({ bookings, financialAlerts = [], isAdmin, isSP, onAcknowledg
             className={`flex-1 py-3 text-[9px] ${isFinancial ? 'border-amber-500/40 text-amber-500' : ''}`} 
             onClick={() => { setShow(false); onAcknowledge(); }}
           >
-            {isFinancial ? 'Audit Transaction' : 'View Assignment'}
+            {isFinancial ? 'Audit Transaction' : (isAdmin ? 'View Assignment' : (!isSP ? 'View Details' : 'View Request'))}
           </Button>
           <Button variant="outline" className="py-3 text-[9px] px-4" onClick={() => setShow(false)}><X className="w-4 h-4" /></Button>
        </div>
