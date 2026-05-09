@@ -5308,7 +5308,7 @@ export default function App() {
               <div className="glass-card p-4 rounded-[3rem] border-white/10">
                  <div className="bg-neutral-900 rounded-[2.5rem] overflow-hidden aspect-video relative group">
                     <img 
-                      src="https://images.unsplash.com/photo-1587350859728-117622bc73fe?q=80&w=2070&auto=format&fit=crop" 
+                      src="/priority-dispatch.jpeg" 
                       alt="City Emergency Medical Center" 
                       className="w-full h-full object-cover grayscale transition-transform duration-700 group-hover:scale-105"
                       referrerPolicy="no-referrer"
