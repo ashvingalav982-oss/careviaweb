@@ -6,8 +6,17 @@
     <link rel="icon" type="image/png" href="/logo.png" />
     <title>CAREVIA - Health & Wellness</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://www.google.com/recaptcha/enterprise.js?render=6Ld7GtssAAAAAF1ADVpARLGGhN3_i5F59pZ5jm4N"></script>
   </head>
   <body>
+    <script>
+      function onClick(e) {
+        e.preventDefault();
+        grecaptcha.enterprise.ready(async () => {
+          const token = await grecaptcha.enterprise.execute('6Ld7GtssAAAAAF1ADVpARLGGhN3_i5F59pZ5jm4N', {action: 'LOGIN'});
+        });
+      }
+    </script>
     <!-- Hidden form to let Netlify know about our custom form submissions -->
     <form name="registrations" data-netlify="true" hidden>
       <input type="text" name="uid" />
