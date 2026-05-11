@@ -591,11 +591,9 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
     
     auth.useDeviceLanguage();
     
-    // Using the provided token for phone authentication
-    const verifier = {
-      type: 'recaptcha',
-      verify: () => Promise.resolve('AdrTqXFZh7fhnJ-QCLS-8rLjGy4zHLesyPmh5vkExRsE2rw2vYtIvvAlitY5-sZFh-2EyfZCT_A1e3TqNxPQ63iQWotRaDRnUCWTGfWjzhhoybTYKlJTl9y-T5hkh-7Z2ylIwD85BNMGh_r7QyAgo3OT4A')
-    } as any;
+    const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      'size': 'invisible'
+    });
     
     (window as any).recaptchaVerifier = verifier;
     return verifier;
@@ -621,7 +619,7 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
       const cred = await signInWithPopup(auth, provider);
       const user = cred.user;
       if (!user.emailVerified) {
-        await sendEmailVerification(user);
+        try { await sendEmailVerification(user); } catch(e) {}
       }
       
       // Check if user is enrolled in MFA. If not, we should prompt for phone number to enroll?
@@ -708,6 +706,11 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
           // Refresh user to apply MFA claims
           await auth.currentUser?.reload();
           
+          if (auth.currentUser && !auth.currentUser.emailVerified) {
+            await signOut(auth);
+            throw new Error('Signup complete! Please verify your email address before logging in.');
+          }
+          
           onLogin();
           onClose();
         }
@@ -747,9 +750,11 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
         try {
           const cred = await signInWithEmailAndPassword(auth, email, password);
           const user = cred.user;
-      if (!user.emailVerified) {
-        await sendEmailVerification(user);
-      }
+          if (!user.emailVerified) {
+            try { await sendEmailVerification(user); } catch(e) {}
+            await signOut(auth);
+            throw new Error('Please verify your email address. A new verification link has been sent.');
+          }
           
           await setDoc(doc(db, 'users', user.uid), {
             lastLogin: serverTimestamp()
@@ -785,9 +790,9 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
         
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         const user = cred.user;
-      if (!user.emailVerified) {
-        await sendEmailVerification(user);
-      }
+        if (!user.emailVerified) {
+          try { await sendEmailVerification(user); } catch(e) {}
+        }
         
         await setDoc(doc(db, 'users', user.uid), {
           uid: user.uid,
@@ -5033,6 +5038,18 @@ export default function App() {
   // 1. Auth Listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
+      if (u) {
+        const isPasswordProvider = u.providerData.some(p => p.providerId === 'password');
+        if (isPasswordProvider && !u.emailVerified) {
+          await signOut(auth);
+          setUser(null);
+          setIsLoggedIn(false);
+          setIsLandingPage(true);
+          setProfile(null);
+          return;
+        }
+      }
+      
       setUser(u);
       if (u) {
         const snap = await getDoc(doc(db, 'users', u.uid));
