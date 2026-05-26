@@ -218,7 +218,6 @@ const MOCK_PROVIDERS: any[] = [];
 
 const NAV_LINKS = [
   { name: 'Home', href: '#' },
-  { name: 'How to use', href: '#how-to-use' },
   { name: 'Services', href: '#services' },
   { name: 'Pricing', href: '#pricing' },
   { name: 'About', href: '#about' },
@@ -468,66 +467,7 @@ const PaymentModal = ({ isOpen, onClose, planName, onPaymentComplete }: any) => 
   );
 };
 
-const WalletModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
-  if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 font-sans">
-      <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        onClick={onClose}
-        className="absolute inset-0 bg-black/90 backdrop-blur-md" 
-      />
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9, y: 30 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="glass-card w-full max-w-md relative z-10 overflow-hidden"
-      >
-        <div className="p-8 border-b border-white/5 bg-primary/5 flex justify-between items-center">
-           <div>
-              <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-1">Financial Portal</p>
-              <h3 className="text-xl font-bold">CARVIA Wallet</h3>
-           </div>
-           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X className="w-5 h-5 text-white/60" /></button>
-        </div>
-
-        <div className="p-8 text-center space-y-6">
-           <div className="p-6 bg-white/5 rounded-3xl border border-white/10 mb-6">
-              <p className="text-[10px] uppercase font-bold text-white/50 tracking-widest mb-1">Current Balance</p>
-              <p className="text-4xl font-black text-white italic tracking-tighter">₹0.00</p>
-           </div>
-
-           <div className="bg-white p-4 rounded-3xl inline-block shadow-2xl shadow-primary/20">
-              <img 
-                src="https://photos.fife.usercontent.google.com/pw/AP1GczMC8Fi8dKTsynybVSK6yTGLoVJohAaHD5zOnEX0FVdUcPmO3cSIuliw=w183-h258-no?authuser=0" 
-                alt="Recharge QR" 
-                className="w-56 h-56 object-contain rounded-xl"
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                   e.currentTarget.src = "https://img.icons8.com/isometric/512/qr-code.png";
-                }}
-              />
-           </div>
-
-           <div>
-              <p className="text-sm font-bold text-white mb-2">Scan QR to Add Credits</p>
-              <p className="text-[10px] text-white/60 uppercase tracking-widest leading-relaxed">
-                Add funds instantly to your CARVIA Wallet for any transaction. 
-                <br />Funds will reflect after <span className="text-emerald-500">System Verification</span>.
-              </p>
-           </div>
-
-           <div className="pt-4 border-t border-white/5">
-              <Button variant="primary" className="w-full py-4 uppercase tracking-widest text-xs" onClick={onClose}>
-                 Done
-              </Button>
-           </div>
-        </div>
-      </motion.div>
-    </div>
-  );
-};
 
 const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: any) => {
   const [mode, setMode] = useState('login'); // login, signup, sp, mfa
@@ -1285,35 +1225,7 @@ const SubscriptionPlans = ({ onUpgrade }: any) => {
   );
 };
 
-const HowToUse = () => {
-  const steps = [
-    { title: "Authentication", desc: "Login or Register your account using mobile OTP or email to secure your profile.", icon: <User /> },
-    { title: "Service Discovery", desc: "Browse through our specialized Elderly, Child, or Pet care sections to find what fits.", icon: <Stethoscope /> },
-    { title: "Define Requirements", desc: "Submit a requirements form describing your unique problems for precision matching.", icon: <MessageSquare /> },
-    { title: "Booking & Lock", icon: <Lock />, desc: "Confirm your selection, pay via CARVIA Wallet, and receive your Start/End OTP." }
-  ];
 
-  return (
-    <section id="how-to-use" className="py-24 max-w-7xl mx-auto px-6 font-sans scroll-mt-24">
-      <SectionHeading 
-        title="How to use"
-        centered
-      />
-      <div className="grid md:grid-cols-4 gap-8 relative">
-        <div className="hidden lg:block absolute top-[60px] left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-        {steps.map((s, i) => (
-          <div key={i} className="relative text-center group">
-            <div className="w-16 h-16 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-primary mx-auto mb-6 transition-all group-hover:bg-primary group-hover:text-surface group-hover:scale-110">
-               {s.icon}
-            </div>
-            <h4 className="text-sm font-bold uppercase tracking-widest mb-3">{i + 1}. {s.title}</h4>
-            <p className="text-xs text-white/60 leading-relaxed px-4">{s.desc}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-};
 
 const AboutSection = () => (
   <section id="about" className="py-32 bg-surface/50 monolith-grid font-sans overflow-hidden scroll-mt-24">
@@ -1332,7 +1244,7 @@ const AboutSection = () => (
                  { t: '10-Step Vetting', d: 'Rigorous vetting for every provider.' },
                  { t: '24/7 SOS', d: 'Real-time emergency dispatch hub.' },
                  { t: 'Global Standards', d: 'HIPAA & GDPR data compliance.' },
-                 { t: 'Carvia Wallet', d: 'Secure, instant financial management.' }
+                 { t: 'Instant Booking', d: 'Seamless and rapid booking process.' }
                ].map((item, i) => (
                  <div key={i} className="p-4 bg-white/5 rounded-2xl border border-white/5">
                     <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">{item.t}</p>
@@ -1862,7 +1774,7 @@ const LegalModal = ({ isOpen, onClose }: any) => {
           </section>
           <section>
             <h4 className="text-white font-bold mb-4 uppercase tracking-widest">3. Billing & Refunds</h4>
-            <p>Premium subscriptions are billed monthly/annually. Cancellations take effect at the end of the billing cycle. Priority refunds are processed within 2 hours to the CARVIA Wallet.</p>
+            <p>Premium subscriptions are billed monthly/annually. Cancellations take effect at the end of the billing cycle. Priority refunds are processed within 2 hours to the original payment method.</p>
           </section>
           <section>
             <h4 className="text-white font-bold mb-4 uppercase tracking-widest">4. SOS & Emergency Response</h4>
@@ -4210,23 +4122,7 @@ const AdminDashboard = ({
   );
 };
 
-const WalletSection = ({ onManage }: { onManage?: () => void }) => (
-  <div className="glass p-8 rounded-[2.5rem] flex flex-col sm:flex-row items-center justify-between font-sans border-white/5 gap-8">
-    <div className="flex items-center gap-6 w-full sm:w-auto">
-      <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center text-primary flex-shrink-0">
-        <Wallet className="w-8 h-8" />
-      </div>
-      <div>
-        <h4 className="text-sm font-black uppercase tracking-widest opacity-40">CARVIA Wallet</h4>
-        <p className="text-3xl font-bold mt-1">₹0.00</p>
-      </div>
-    </div>
-    <div className="text-center sm:text-right w-full sm:w-auto">
-       <p className="text-[10px] uppercase font-bold text-white/50 tracking-widest mb-2">Rewards Active</p>
-       <Button variant="outline" className="w-full sm:w-auto px-6 py-3 text-[10px] uppercase tracking-widest" onClick={onManage}>Manage Balance</Button>
-    </div>
-  </div>
-);
+
 
 const LiveAlarm = ({ bookings, financialAlerts = [], isAdmin, isSP, onAcknowledge }: any) => {
   const [lastCount, setLastCount] = useState(bookings.length);
@@ -5019,7 +4915,7 @@ export default function App() {
   const [selectedBookingService, setSelectedBookingService] = useState('');
   const [isLandingPage, setIsLandingPage] = useState(true);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-  const [isWalletOpen, setIsWalletOpen] = useState(false);
+
   const [selectedPlanName, setSelectedPlanName] = useState('');
   const [isProviderDashboardOpen, setIsProviderDashboardOpen] = useState(false);
   const [financialAlerts, setFinancialAlerts] = useState<any[]>([]);
@@ -5430,14 +5326,13 @@ export default function App() {
                  </div>
                  <div className="mt-4 flex flex-col gap-4">
                     <ActiveServiceTracker bookings={activeBookings} />
-                    <WalletSection onManage={() => setIsWalletOpen(true)} />
                  </div>
               </div>
             </div>
           </div>
         </section>
 
-        <HowToUse />
+
 
         <AboutSection />
         
@@ -5714,7 +5609,7 @@ export default function App() {
           triggerFinancialAlert('PAYMENT', `Customer completed payment for ${selectedPlanName} Pack`);
         }}
       />
-      <WalletModal isOpen={isWalletOpen} onClose={() => setIsWalletOpen(false)} />
+
       <LegalModal isOpen={isLegalOpen} onClose={() => setIsLegalOpen(false)} />
       <AIBotChat isOpen={isBotOpen} isPremium={isPremium} onClose={() => setIsBotOpen(false)} sessionId={aiSessionId} onLog={addLog} />
       <LiveAlarm 
