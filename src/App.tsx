@@ -100,6 +100,8 @@ import {
 } from 'firebase/firestore';
 
 import { exportToSheets, uploadToDrive } from './lib/workspace';
+import { handleGoogleSignIn, authDebugLog } from './lib/auth/googleAuth';
+import { DebugLogStore } from './utils/authDebug';
 import { LanguageSelector } from './LanguageSelector';
 import { applyHindiCorrections } from './hindiCorrector';
 
@@ -554,65 +556,33 @@ const AuthModal = ({ isOpen, onClose, onOpenAdmin, onLogin, onProviderLogin }: a
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError('');
+
     try {
-      const provider = new GoogleAuthProvider();
-      const cred = await signInWithPopup(auth, provider);
-      const user = cred.user;
-      if (!user.emailVerified) {
-        try { await sendEmailVerification(user); } catch(e) {}
-      }
-      
-      // Check if user is enrolled in MFA. If not, we should prompt for phone number to enroll?
-      // For now, let's allow them in. To strictly enforce phone verification for Google users, 
-      // we'd switch them to a 'google-mfa-enroll' mode.
-      
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-        role: 'customer',
-        updatedAt: serverTimestamp(),
-        lastLogin: serverTimestamp()
-      }, { merge: true });
-      
-      try { await saveToExcel({ uid: user.uid, role: 'customer', phone: '', email: user.email || '' }); } catch(e) {}
-      await sendWelcomeEmail(user.email || '');
-      
-      onLogin();
-      onClose();
-    } catch(err: any) {
-      console.error(err);
-      if (err.code === 'auth/multi-factor-auth-required') {
-        const res = getMultiFactorResolver(auth, err);
-        setResolver(res);
-        
+      DebugLogStore.addLog('AUTH', 'Starting Google login');
+      authDebugLog.info('Google login initiated by user');
+
+      const result = await handleGoogleSignIn(auth, db, async (verificationId, resolver) => {
         // Handle MFA
-        if (res.hints[0].factorId === PhoneMultiFactorGenerator.FACTOR_ID) {
-          const phoneInfoOptions = {
-            multiFactorHint: res.hints[0],
-            session: res.session
-          };
-          const phoneAuthProvider = new PhoneAuthProvider(auth);
-          const verifier = setupRecaptcha();
-          const vid = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, verifier);
-          setVerificationId(vid);
-          setMode('mfa');
-          setOtpSent(true);
-        } else {
-          setError('Unsupported second factor.');
-        }
+        setVerificationId(verificationId);
+        setResolver(resolver);
+        setMode('mfa');
+        setOtpSent(true);
+      });
+
+      if (result.success) {
+        DebugLogStore.addLog('AUTH', 'Google login successful', { uid: result.user?.uid });
+        onLogin();
+        onClose();
+      } else if (result.requiresMFA) {
+        DebugLogStore.addLog('AUTH', 'MFA required', { verificationId: result.verificationId });
       } else {
-        let errorMessage = err.message || 'Gmail Sign-In failed';
-        if (err.code === 'auth/account-exists-with-different-credential') {
-          errorMessage = 'An account already exists with the same email address but different sign-in credentials.';
-        } else if (err.code === 'auth/popup-closed-by-user') {
-          errorMessage = 'Sign-in popup was closed before completion.';
-        } else if (errorMessage.includes('Firebase:')) {
-          errorMessage = 'A Gmail Sign-In error occurred. Please try again.';
-        }
-        setError(errorMessage);
+        setError(result.error || 'Login failed');
+        DebugLogStore.addLog('AUTH', 'Google login failed', { error: result.error, code: result.errorCode });
       }
+    } catch (err) {
+      authDebugLog.error('Unexpected error in Google login', err);
+      setError('An unexpected error occurred. Check console for details.');
+      DebugLogStore.addLog('AUTH', 'Unexpected error', { error: String(err) });
     } finally {
       setLoading(false);
     }
