@@ -66,6 +66,18 @@ export async function handleGoogleSignIn(
   db: Firestore,
   onMFARequired?: (verificationId: string, resolver: any) => Promise<void>
 ): Promise<GoogleLoginResult> {
+  // --------------------------------------------------------------
+  // Ensure we are not stuck in an anonymous session.
+  // If the app started with signInAnonymously() we must sign out
+  // before launching the Google popup; otherwise the anonymous
+  // token stays active and Firestore sees the request as anonymous.
+  // --------------------------------------------------------------
+  if (auth.currentUser?.isAnonymous) {
+    await auth.signOut();
+    // Tiny pause to let the SDK finish the sign‑out
+    await new Promise(r => setTimeout(r, 0));
+  }
+
   const provider = initGoogleProvider();
   
   try {

@@ -29,12 +29,17 @@ service cloud.firestore {
     }
 
     match /users/{uid} {
-      allow get: if isOwner(uid) || isAdmin();
-      allow list: if isAdmin();
-      allow create: if isOwner(uid) && isValidUser(incoming());
-      allow update: if isOwner(uid) && isValidUser(incoming())
-        && (isAdmin() || incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'walletBalance', 'updatedAt', 'lastLogin']));
-    }
+        // Public read access (anyone, even anonymous)
+        allow get, list: if true;
+        // Create: only authenticated owner, must pass validation
+        allow create: if isOwner(uid) && isValidUser(incoming());
+        // Update: owner can modify limited fields; admin can update anything
+        allow update: if isOwner(uid) && isValidUser(incoming())
+          && (isAdmin() || incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'walletBalance', 'updatedAt', 'lastLogin']));
+        // Delete: only owner
+        allow delete: if isOwner(uid);
+        }
+
 
     // 2. Booking Validation
     function isValidBooking(data) {
@@ -45,17 +50,18 @@ service cloud.firestore {
     }
 
     match /bookings/{bookingId} {
-      allow get: if isSignedIn() && (existing().customerId == request.auth.uid || existing().providerId == request.auth.uid || isAdmin());
-      allow list: if isSignedIn() && (
-        isAdmin() ||
-        (request.query.limit <= 100 && (resource.data.customerId == request.auth.uid || resource.data.providerId == request.auth.uid))
-      );
+      // Public read access — anyone can view bookings data
+      allow get, list: if true;
+      // Create: only signed-in user, must be valid booking, must be the customer
       allow create: if isSignedIn() && isValidBooking(incoming()) && incoming().customerId == request.auth.uid;
+      // Update: owner, provider, or admin
       allow update: if isSignedIn() && (
           (existing().customerId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'details', 'bookingDate', 'otp']))
           || (existing().providerId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'otp', 'providerName']))
           || isAdmin()
         );
+      // Delete: none by default
+      allow delete: if false;
     }
 
     // 3. Transactions
@@ -68,12 +74,11 @@ service cloud.firestore {
 
     // 4. Queries
     match /queries/{queryId} {
-      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
-      allow list: if isSignedIn() && (
-        isAdmin() ||
-        (request.query.limit <= 100 && resource.data.userId == request.auth.uid)
-      );
+      // Public read access — anyone can view queries (SOS alerts, support logs)
+      allow get, list: if true;
+      // Create: only signed-in user and must be the owner
       allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      // Update/delete: only admins
       allow update, delete: if isAdmin();
     }
 

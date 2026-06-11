@@ -4678,14 +4678,23 @@ const BookingModal = ({ isOpen, onClose, serviceName, onConfirm }: any) => {
   );
 };
 
-const ProfileModal = ({ isOpen, onClose }: any) => {
-  const [profile, setProfile] = useState(() => {
+const ProfileModal = ({ isOpen, onClose, user, profile }: any) => {
+  const [profileState, setProfileState] = useState(() => {
     const saved = localStorage.getItem('user_profile');
-    return saved ? JSON.parse(saved) : { name: '', email: '', phone: '', preferredServices: [] };
+    if (saved) return JSON.parse(saved);
+    // If we have a Firestore profile from previous login, use it
+    if (profile) return profile;
+    // Fallback: pre-fill from Google auth data
+    return {
+      name: user?.displayName || '',
+      email: user?.email || '',
+      phone: '',
+      preferredServices: []
+    };
   });
 
   const toggleService = (serviceId: string) => {
-    setProfile((prev: any) => ({
+    setProfileState((prev: any) => ({
       ...prev,
       preferredServices: prev.preferredServices.includes(serviceId)
         ? prev.preferredServices.filter((s: string) => s !== serviceId)
@@ -4694,7 +4703,7 @@ const ProfileModal = ({ isOpen, onClose }: any) => {
   };
 
   const handleSave = () => {
-    localStorage.setItem('user_profile', JSON.stringify(profile));
+    localStorage.setItem('user_profile', JSON.stringify(profileState));
     onClose();
   };
 
@@ -4702,13 +4711,13 @@ const ProfileModal = ({ isOpen, onClose }: any) => {
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 font-sans">
-      <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         onClick={onClose}
         className="absolute inset-0 bg-black/80 backdrop-blur-sm"
       />
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         className="glass-card w-full max-w-xl relative z-10 overflow-hidden max-h-[90vh] flex flex-col"
@@ -4729,32 +4738,32 @@ const ProfileModal = ({ isOpen, onClose }: any) => {
            <div className="grid md:grid-cols-2 gap-8">
               <div>
                 <label className="label-bold mb-2 block">Full Name</label>
-                <input 
-                  type="text" 
-                  value={profile.name}
-                  onChange={(e) => setProfile({...profile, name: e.target.value})}
-                  className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors" 
-                  placeholder="Enter your name" 
+                <input
+                  type="text"
+                  value={profileState.name}
+                  onChange={(e) => setProfileState({...profileState, name: e.target.value})}
+                  className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors"
+                  placeholder="Enter your name"
                 />
               </div>
               <div>
                 <label className="label-bold mb-2 block">Email Address</label>
-                <input 
-                  type="email" 
-                  value={profile.email}
-                  onChange={(e) => setProfile({...profile, email: e.target.value})}
-                  className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors" 
-                  placeholder="name@example.com" 
+                <input
+                  type="email"
+                  value={profileState.email}
+                  onChange={(e) => setProfileState({...profileState, email: e.target.value})}
+                  className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors"
+                  placeholder="name@example.com"
                 />
               </div>
               <div>
                 <label className="label-bold mb-2 block">Phone Number</label>
-                <input 
-                  type="tel" 
-                  value={profile.phone}
-                  onChange={(e) => setProfile({...profile, phone: e.target.value})}
-                  className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors" 
-                  placeholder="+91 XXXXX XXXXX" 
+                <input
+                  type="tel"
+                  value={profileState.phone}
+                  onChange={(e) => setProfileState({...profileState, phone: e.target.value})}
+                  className="w-full bg-white/5 border border-white/10 px-4 py-3 rounded-xl text-sm focus:border-primary outline-none transition-colors"
+                  placeholder="+91 XXXXX XXXXX"
                 />
               </div>
            </div>
@@ -4763,14 +4772,14 @@ const ProfileModal = ({ isOpen, onClose }: any) => {
               <label className="label-bold mb-4 block underline decoration-primary decoration-4 underline-offset-8">Preferred Services</label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
                 {CATEGORIES.map(cat => (
-                  <button 
+                  <button
                     key={cat.id}
                     onClick={() => toggleService(cat.id)}
-                    className={`flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all ${profile.preferredServices.includes(cat.id) ? 'bg-primary/20 border-primary text-primary' : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'}`}
+                    className={`flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all ${profileState.preferredServices.includes(cat.id) ? 'bg-primary/20 border-primary text-primary' : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'}`}
                   >
                     {cat.icon}
                     <span className="text-[10px] uppercase font-bold tracking-widest">{cat.name}</span>
-                    {profile.preferredServices.includes(cat.id) && <CheckCircle2 className="w-3 h-3 absolute top-2 right-2" />}
+                    {profileState.preferredServices.includes(cat.id) && <CheckCircle2 className="w-3 h-3 absolute top-2 right-2" />}
                   </button>
                 ))}
               </div>
@@ -5568,7 +5577,12 @@ export default function App() {
         isOpen={isProviderModalOpen} 
         onClose={() => setIsProviderModalOpen(false)} 
       />
-      <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
+      <ProfileModal 
+        isOpen={isProfileOpen} 
+        onClose={() => setIsProfileOpen(false)}
+        user={user}
+        profile={profile}
+      />
       <PaymentModal 
         isOpen={isPaymentOpen} 
         planName={selectedPlanName} 
