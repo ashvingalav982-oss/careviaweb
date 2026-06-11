@@ -34,8 +34,10 @@ service cloud.firestore {
         // Create: only authenticated owner, must pass validation
         allow create: if isOwner(uid) && isValidUser(incoming());
         // Update: owner can modify limited fields; admin can update anything
-        allow update: if isOwner(uid) && isValidUser(incoming())
-          && (isAdmin() || incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'walletBalance', 'updatedAt', 'lastLogin']));
+        allow update: if isOwner(uid) && (
+          isAdmin()
+          || (isValidUser(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'walletBalance', 'updatedAt', 'lastLogin']))
+        );
         // Delete: only owner
         allow delete: if isOwner(uid);
         }
