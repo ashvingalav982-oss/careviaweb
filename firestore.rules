@@ -1,105 +1,104 @@
 rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // 0. Global Safety Net
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // 0.1 Context-Aware Helpers
-    function isSignedIn() { return request.auth != null; }
-    function isAdmin() { 
-      return isSignedIn() && (
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
-      ); 
-    }
-    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
-    function incoming() { return request.resource.data; }
-    function existing() { return resource.data; }
-    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
-    function isVerifiedUser() { return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'phone'); }
-
-    // 1. User Validation
-    function isValidUser(data) {
-      return data.uid is string && data.uid == request.auth.uid
-        && data.role in ['customer', 'provider', 'admin']
-        && (data.walletBalance == null || data.walletBalance is number)
-        && data.keys().hasAll(['uid', 'role']);
-    }
-
-    match /users/{uid} {
-        // Public read access (anyone, even anonymous)
-        allow get, list: if true;
-        // Create: only authenticated owner, must pass validation
-        allow create: if isOwner(uid) && isValidUser(incoming());
-        // Update: owner can modify limited fields; admin can update anything
-        allow update: if isOwner(uid) && (
-          isAdmin()
-          // Full profile update (Google sign-in, email signup)
-          || (isValidUser(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'walletBalance', 'updatedAt', 'lastLogin', 'email', 'authProvider']))
-          // Partial update — just login timestamp (email login)
-          || incoming().diff(existing()).affectedKeys().hasOnly(['lastLogin'])
-        );
-        // Delete: only owner
-        allow delete: if isOwner(uid);
+    service cloud.firestore {
+      match /databases/{database}/documents {
+        // 0. Global Safety Net
+        match /{document=**} {
+          allow read, write: if false;
         }
-
-
-    // 2. Booking Validation
-    function isValidBooking(data) {
-      return data.customerId is string
-        && data.serviceType is string && data.serviceType.size() <= 100
-        && data.status in ['PENDING', 'ACCEPTED_BY_SP', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']
-        && data.keys().hasAll(['customerId', 'serviceType', 'status']);
+    
+        // 0.1 Context-Aware Helpers
+        function isSignedIn() { return request.auth != null; }
+        function isAdmin() { 
+          return isSignedIn() && (
+            exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+          ); 
+        }
+        function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+        function incoming() { return request.resource.data; }
+        function existing() { return resource.data; }
+        function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\\\-]+$'); }
+        function isVerifiedUser() { return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'phone'); }
+    
+        // 1. User Validation
+        function isValidUser(data) {
+          return data.uid is string && data.uid == request.auth.uid
+            && data.role in ['customer', 'provider', 'admin']
+            && (data.walletBalance == null || data.walletBalance is number)
+            && data.keys().hasAll(['uid', 'role']);
+        }
+    
+        match /users/{uid} {
+            // Public read access (anyone, even anonymous)
+            allow get, list: if true;
+            // Create: only authenticated owner, must pass validation
+            allow create: if isOwner(uid) && isValidUser(incoming());
+            // Update: owner can modify limited fields; admin can update anything
+            allow update: if isOwner(uid) && (
+              isAdmin() ||
+              // Full profile update (Google sign-in, email signup, phone OTP)
+              (isValidUser(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['uid', 'role', 'displayName', 'photoURL', 'phone', 'walletBalance', 'updatedAt', 'lastLogin', 'email', 'authProvider', 'name', 'spId', 'isVerified', 'status'])) ||
+              // Partial update — just login timestamp (email login)
+              incoming().diff(existing()).affectedKeys().hasOnly(['lastLogin'])
+            );
+            // Delete: only owner
+            allow delete: if isOwner(uid);
+        }
+    
+        // 2. Booking Validation
+        function isValidBooking(data) {
+          return data.customerId is string
+            && data.serviceType is string && data.serviceType.size() <= 100
+            && data.status in ['PENDING', 'ACCEPTED_BY_SP', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']
+            && data.keys().hasAll(['customerId', 'serviceType', 'status']);
+        }
+    
+        match /bookings/{bookingId} {
+          // Public read access — anyone can view bookings data
+          allow get, list: if true;
+          // Create: only signed-in user, must be valid booking, must be the customer
+          allow create: if isSignedIn() && isValidBooking(incoming()) && incoming().customerId == request.auth.uid;
+          // Update: owner, provider, or admin
+          allow update: if isSignedIn() && (
+              (existing().customerId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'details', 'bookingDate', 'otp'])) ||
+              (existing().providerId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'otp', 'providerName'])) ||
+              isAdmin()
+            );
+          // Delete: none by default
+          allow delete: if false;
+        }
+    
+        // 3. Transactions
+        match /transactions/{txnId} {
+          allow get: if isSignedIn() && (isOwner(existing().userId) || isAdmin());
+          allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+          allow create: if isOwner(incoming().userId);
+          allow update, delete: if false; // Transactions are immutable logs
+        }
+    
+        // 4. Queries
+        match /queries/{queryId} {
+          // Public read access — anyone can view queries (SOS alerts, support logs)
+          allow get, list: if true;
+          // Create: only signed-in user and must be the owner
+          allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+          // Update/delete: only admins
+          allow update, delete: if isAdmin();
+        }
+    
+        // 5. Admin Notifications
+        match /adminNotifications/{notifId} {
+          // Read: any signed-in user can view notifications
+          allow get, list: if isSignedIn();
+          // Create: any signed-in user can create notification entries
+          allow create: if isSignedIn();
+          // Update/delete: only admins
+          allow update, delete: if isAdmin();
+        }
+    
+        // Admins Root
+        match /admins/{uid} {
+          allow read, write: if false; // Controlled via Cloud Console
+        }
+      }
     }
-
-    match /bookings/{bookingId} {
-      // Public read access — anyone can view bookings data
-      allow get, list: if true;
-      // Create: only signed-in user, must be valid booking, must be the customer
-      allow create: if isSignedIn() && isValidBooking(incoming()) && incoming().customerId == request.auth.uid;
-      // Update: owner, provider, or admin
-      allow update: if isSignedIn() && (
-          (existing().customerId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'details', 'bookingDate', 'otp']))
-          || (existing().providerId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'otp', 'providerName']))
-          || isAdmin()
-        );
-      // Delete: none by default
-      allow delete: if false;
-    }
-
-    // 3. Transactions
-    match /transactions/{txnId} {
-      allow get: if isSignedIn() && (isOwner(existing().userId) || isAdmin());
-      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isOwner(incoming().userId);
-      allow update, delete: if false; // Transactions are immutable logs
-    }
-
-    // 4. Queries
-    match /queries/{queryId} {
-      // Public read access — anyone can view queries (SOS alerts, support logs)
-      allow get, list: if true;
-      // Create: only signed-in user and must be the owner
-      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
-      // Update/delete: only admins
-      allow update, delete: if isAdmin();
-    }
-
-    // 5. Admin Notifications
-    match /adminNotifications/{notifId} {
-      // Read: any signed-in user can view notifications
-      allow get, list: if isSignedIn();
-      // Create: any signed-in user can create notification entries
-      allow create: if isSignedIn();
-      // Update/delete: only admins
-      allow update, delete: if isAdmin();
-    }
-
-    // Admins Root
-    match /admins/{uid} {
-      allow read, write: if false; // Controlled via Cloud Console
-    }
-  }
-}

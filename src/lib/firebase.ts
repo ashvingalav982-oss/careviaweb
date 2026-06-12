@@ -60,4 +60,3 @@ export function handleFirestoreError(error: any, operationType: FirestoreErrorIn
   DebugLogStore.addLog('FIRESTORE_ERROR', `${operationType} operation failed`, { error: error.message, path });
   throw error;
 }
-
