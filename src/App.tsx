@@ -1897,7 +1897,7 @@ const ProviderDashboard = ({ providerData, onUpdateProvider, onClose, bookings =
             onClick={() => setActiveTab('bookings')}
             className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'bookings' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-muted'}`}
           >
-            <Calendar className="w-4 h-4" /> Bookings {bookings.filter(b => b.status === "PENDING" || b.status === 'PENDING_PROCESS').length > 0 && <span className="ml-auto w-2 h-2 bg-primary rounded-full animate-pulse" />}
+            <Calendar className="w-4 h-4" /> Bookings {bookings.filter((b: any) => b.status === "PENDING" || b.status === 'PENDING_PROCESS').length > 0 && <span className="ml-auto w-2 h-2 bg-primary rounded-full animate-pulse" />}
           </button>
           <button 
             onClick={() => setActiveTab('earnings')}
@@ -2036,7 +2036,7 @@ const ProviderDashboard = ({ providerData, onUpdateProvider, onClose, bookings =
                 </div>
 
                 <div className="grid grid-cols-1 gap-6">
-                   {bookings.map(book => (
+                   {bookings.map((book: any) => (
                      <div key={book.id} className="glass-card flex flex-col md:flex-row gap-8 items-start md:items-center">
                         <div className="flex-1 space-y-4">
                            <div className="flex items-center gap-3">
@@ -2322,11 +2322,11 @@ const AdminDashboard = ({
     { id: 3, name: "Michael R.", role: "Support Staff", email: "michael@carevia.app", level: "Read-Only" },
   ];
 
-  const admins = ['All', ...new Set(propActions.map(a => a.admin))];
+  const admins = ['All', ...Array.from(new Set(propActions.map((a: any) => a.admin))) as string[]];
   const types = ['All', 'Admin', 'AI BOT', 'System'];
 
   const filteredAndSortedActions = propActions
-    .filter(act => {
+    .filter((act: any) => {
       const matchAdmin = filterAdmin === 'All' || act.admin === filterAdmin;
       const matchType = filterType === 'All' || (act.type?.toUpperCase() === filterType.toUpperCase() || (filterType === 'Admin' && (!act.type || act.type === 'admin')));
       const matchSearch = !searchQuery || 
@@ -2339,7 +2339,7 @@ const AdminDashboard = ({
       const matchEnd = !endDate || actDate <= new Date(endDate + 'T23:59:59');
       return matchAdmin && matchType && matchSearch && matchStart && matchEnd;
     })
-    .sort((a, b) => {
+    .sort((a: any, b: any) => {
       const timeA = new Date(a.time).getTime();
       const timeB = new Date(b.time).getTime();
       return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
@@ -2646,7 +2646,7 @@ const AdminDashboard = ({
         onClick={() => setActiveTab('bookings')}
         className={`flex items-center gap-3 w-full p-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'bookings' ? 'bg-primary/10 text-primary' : 'hover:bg-white/5 text-white/60'}`}
       >
-        <Calendar className="w-4 h-4" /> Booking Ops {bookings.filter(b => b.status === "ACCEPTED_BY_SP").length > 0 && <span className="ml-auto w-2 h-2 bg-primary rounded-full animate-pulse" />}
+        <Calendar className="w-4 h-4" /> Booking Ops {bookings.filter((b: any) => b.status === "ACCEPTED_BY_SP").length > 0 && <span className="ml-auto w-2 h-2 bg-primary rounded-full animate-pulse" />}
       </button>
       <button 
         onClick={() => setActiveTab('consultation')}
@@ -3233,7 +3233,7 @@ const AdminDashboard = ({
                             </tr>
                          </thead>
                          <tbody className="divide-y divide-white/5">
-                            {securityAlerts.map((alert) => (
+                            {securityAlerts.map((alert: any) => (
                                <tr key={alert.id} className="hover:bg-white/[0.01] transition-colors group">
                                   <td className="px-6 py-4 text-[10px] font-bold text-white/60">{alert.date}</td>
                                   <td className="px-6 py-4 text-[10px] font-mono font-bold text-primary">{alert.detailId}</td>
@@ -3782,7 +3782,7 @@ const AdminDashboard = ({
                                 onChange={(e) => setFilterAdmin(e.target.value)}
                                 className="bg-transparent text-[9px] font-bold text-white/80 outline-none cursor-pointer uppercase tracking-widest"
                               >
-                                {admins.map(adm => <option key={adm} value={adm} className="bg-surface">{adm}</option>)}
+                                {admins.map((adm: string) => <option key={adm} value={adm} className="bg-surface">{adm}</option>)}
                               </select>
                            </div>
                            <div className="w-px h-4 bg-white/10 hidden md:block" />
@@ -3838,7 +3838,7 @@ const AdminDashboard = ({
                      </div>
                      
                      <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                        {filteredAndSortedActions.length > 0 ? filteredAndSortedActions.map(act => (
+                        {filteredAndSortedActions.length > 0 ? filteredAndSortedActions.map((act: any) => (
                           <motion.div 
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -3979,7 +3979,7 @@ const AdminDashboard = ({
                        <div className="flex gap-4">
                           <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">Global Override:</span>
                           <button 
-                            onClick={() => setTeamAccess(prev => prev === 'Full' ? 'Read-Only' : 'Full')}
+                            onClick={() => setTeamAccess((prev: any) => prev === 'Full' ? 'Read-Only' : 'Full')}
                             className={`px-3 py-1 rounded text-[8px] font-black uppercase tracking-tighter ${teamAccess === 'Full' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}
                           >
                             {teamAccess === 'Full' ? 'Open' : 'Restricted'}
@@ -4027,7 +4027,7 @@ const AdminDashboard = ({
                        <button onClick={() => setActiveTab('security')} className="text-[8px] font-bold text-red-500 uppercase tracking-widest hover:underline">View All</button>
                     </div>
                     <div className="space-y-3">
-                       {securityAlerts.slice(0, 3).map((alert) => (
+                       {securityAlerts.slice(0, 3).map((alert: any) => (
                          <div key={alert.id} className="p-4 bg-white/5 border border-white/5 rounded-2xl text-left">
                             <div className="flex justify-between items-start mb-2">
                                <span className="text-[8px] font-black text-red-500 uppercase tracking-widest px-2 py-0.5 bg-red-500/10 rounded">Unauthorized Attempt</span>
@@ -4054,7 +4054,7 @@ const AdminDashboard = ({
                        <button onClick={() => setActiveTab('security')} className="text-[8px] font-bold text-red-500 uppercase tracking-widest hover:underline">View All</button>
                     </div>
                     <div className="space-y-3">
-                       {securityAlerts.slice(0, 3).map((alert) => (
+                       {securityAlerts.slice(0, 3).map((alert: any) => (
                          <div key={alert.id} className="p-4 bg-white/5 border border-white/5 rounded-2xl text-left">
                             <div className="flex justify-between items-start mb-2">
                                <span className="text-[8px] font-black text-red-500 uppercase tracking-widest px-2 py-0.5 bg-red-500/10 rounded">Unauthorized Attempt</span>
@@ -4898,11 +4898,12 @@ export default function App() {
   const [selectedPlanName, setSelectedPlanName] = useState('');
   const [isProviderDashboardOpen, setIsProviderDashboardOpen] = useState(false);
   const [financialAlerts, setFinancialAlerts] = useState<any[]>([]);
-  const [providerProfile, setProviderProfile] = useState({
+  const [providerProfile, setProviderProfile] = useState<{ name: string; spId: string; isVerified: boolean; isDocsUploaded: boolean; preferredCities: string[] }>({
     name: 'Aarav Sharma',
     spId: 'SP-9921',
     isVerified: true,
-    isDocsUploaded: true
+    isDocsUploaded: true,
+    preferredCities: []
   });
 
   const [activeBookings, setActiveBookings] = useState<any[]>([]);
