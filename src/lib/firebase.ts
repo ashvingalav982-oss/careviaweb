@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
+import { getFirestore, doc } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { DebugLogStore, validateFirebaseConfig } from '../utils/authDebug';
@@ -18,29 +18,10 @@ export const auth = getAuth(app);
 export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId);
 export const storage = getStorage(app);
 
-/**
- * Validates connection to Firestore with debug logging
- */
-async function testConnection() {
-  try {
-    const start = performance.now();
-    await getDocFromServer(doc(db, 'test', 'connection'));
-    const latency = Math.round(performance.now() - start);
-    console.log(`✓ Firebase Connected successfully (${latency}ms)`);
-    DebugLogStore.addLog('FIREBASE_CONNECTION', 'Connected', { latency });
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("✗ Please check your Firebase configuration.");
-      DebugLogStore.addLog('FIREBASE_CONNECTION', 'Offline', { error: error.message });
-    } else {
-      console.warn("⚠ Initial connection test failed, but may succeed after auth:", error);
-      DebugLogStore.addLog('FIREBASE_CONNECTION', 'Test failed (may retry after auth)', { error: String(error) });
-    }
-  }
-}
-
-// Run connection test on initialization
-testConnection();
+// Connection test removed — reading from 'test' collection
+// triggered "Missing or insufficient permissions" because
+// no rule existed for that collection. Real operations
+// will surface Firebase config errors with clear messages.
 
 export interface FirestoreErrorInfo {
   error: string;

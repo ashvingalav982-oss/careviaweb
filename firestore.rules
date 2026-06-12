@@ -36,7 +36,10 @@ service cloud.firestore {
         // Update: owner can modify limited fields; admin can update anything
         allow update: if isOwner(uid) && (
           isAdmin()
-          || (isValidUser(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'walletBalance', 'updatedAt', 'lastLogin']))
+          // Full profile update (Google sign-in, email signup)
+          || (isValidUser(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'walletBalance', 'updatedAt', 'lastLogin', 'email', 'authProvider']))
+          // Partial update — just login timestamp (email login)
+          || incoming().diff(existing()).affectedKeys().hasOnly(['lastLogin'])
         );
         // Delete: only owner
         allow delete: if isOwner(uid);
@@ -80,6 +83,16 @@ service cloud.firestore {
       allow get, list: if true;
       // Create: only signed-in user and must be the owner
       allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      // Update/delete: only admins
+      allow update, delete: if isAdmin();
+    }
+
+    // 5. Admin Notifications
+    match /adminNotifications/{notifId} {
+      // Read: any signed-in user can view notifications
+      allow get, list: if isSignedIn();
+      // Create: any signed-in user can create notification entries
+      allow create: if isSignedIn();
       // Update/delete: only admins
       allow update, delete: if isAdmin();
     }
